@@ -1,50 +1,124 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, Animated, StyleSheet } from 'react-native';
 import { COLORS, SIZES } from '../constants/theme';
 import { formatTemp, getWeatherIcon, capitalizeFirst } from '../utils/helpers';
+import AnimatedNumber from './AnimatedNumber';
 
 export default function CurrentWeather({ data, units }) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const iconScale = useRef(new Animated.Value(0.5)).current;
+  const iconPulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (!data) return;
+
+    fadeAnim.setValue(0);
+    slideAnim.setValue(30);
+    iconScale.setValue(0.5);
+
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 700,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 700,
+        useNativeDriver: true,
+      }),
+      Animated.spring(iconScale, {
+        toValue: 1,
+        friction: 4,
+        tension: 50,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    const pulseAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(iconPulse, {
+          toValue: 1.08,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(iconPulse, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulseAnimation.start();
+
+    return () => pulseAnimation.stop();
+  }, [data]);
+
   if (!data) return null;
 
   const icon = getWeatherIcon(data.weather[0].icon);
   const description = capitalizeFirst(data.weather[0].description);
-  const unitSymbol = units === 'metric' ? '°C' : '°F';
-  const windUnit = units === 'metric' ? 'm/s' : 'mph';
+  const unitSymbol = units === 'metric' ? '\u00B0C' : '\u00B0F';
+  const feelsLikeTemp = formatTemp(data.main.feels_like);
 
   return (
-    <View style={styles.container}>
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        },
+      ]}
+    >
       {/* City & Country */}
-      <Text style={styles.city}>
+      <Animated.Text style={[styles.city, { opacity: fadeAnim }]}>
         {data.name}, {data.sys.country}
-      </Text>
+      </Animated.Text>
 
-      {/* Icon & Temp */}
-      <Text style={styles.icon}>{icon}</Text>
-      <Text style={styles.temp}>
-        {formatTemp(data.main.temp)}{unitSymbol}
-      </Text>
-      <Text style={styles.description}>{description}</Text>
-      <Text style={styles.feelsLike}>
-        Feels like {formatTemp(data.main.feels_like)}{unitSymbol}
-      </Text>
+      {/* Large Weather Icon with Pulse */}
+      <Animated.View
+        style={[
+          styles.iconWrap,
+          {
+            transform: [{ scale: Animated.multiply(iconScale, iconPulse) }],
+          },
+        ]}
+      >
+        <Text style={styles.icon}>{icon}</Text>
+      </Animated.View>
 
-      {/* Details Grid */}
-      <View style={styles.detailsGrid}>
-        <DetailItem label="Humidity" value={`${data.main.humidity}%`} emoji="💧" />
-        <DetailItem label="Wind" value={`${data.wind.speed} ${windUnit}`} emoji="💨" />
-        <DetailItem label="Pressure" value={`${data.main.pressure} hPa`} emoji="🔽" />
+      {/* Animated Temperature */}
+      <View style={styles.tempRow}>
+        <AnimatedNumber
+          value={data.main.temp}
+          suffix={unitSymbol}
+          style={styles.temp}
+        />
       </View>
-    </View>
-  );
-}
 
-function DetailItem({ label, value, emoji }) {
-  return (
-    <View style={styles.detailItem}>
-      <Text style={styles.detailEmoji}>{emoji}</Text>
-      <Text style={styles.detailValue}>{value}</Text>
-      <Text style={styles.detailLabel}>{label}</Text>
-    </View>
+      {/* Description */}
+      <Animated.Text style={[styles.description, { opacity: fadeAnim }]}>
+        {description}
+      </Animated.Text>
+
+      {/* Feels Like */}
+      <Animated.Text style={[styles.feelsLike, { opacity: fadeAnim }]}>
+        Feels like {feelsLikeTemp}{unitSymbol}
+      </Animated.Text>
+
+      {/* Min / Max */}
+      <Animated.View style={[styles.minMaxRow, { opacity: fadeAnim }]}>
+        <Text style={styles.minMaxText}>
+          {'\u2B07\uFE0F'} {formatTemp(data.main.temp_min)}{'\u00B0'}
+        </Text>
+        <View style={styles.minMaxDivider} />
+        <Text style={styles.minMaxText}>
+          {'\u2B06\uFE0F'} {formatTemp(data.main.temp_max)}{'\u00B0'}
+        </Text>
+      </Animated.View>
+    </Animated.View>
   );
 }
 
@@ -52,17 +126,25 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 8,
   },
   city: {
-    fontSize: SIZES.lg,
+    fontSize: SIZES.xl,
     fontWeight: '600',
     color: COLORS.textWhite,
-    marginBottom: 8,
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  iconWrap: {
+    marginVertical: 4,
   },
   icon: {
-    fontSize: 80,
-    marginVertical: 8,
+    fontSize: 100,
+  },
+  tempRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginTop: 2,
   },
   temp: {
     fontSize: SIZES.huge,
@@ -75,41 +157,28 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: COLORS.textWhite,
     marginTop: 4,
+    textTransform: 'capitalize',
   },
   feelsLike: {
     fontSize: SIZES.md,
     color: COLORS.textLight,
     marginTop: 4,
-    marginBottom: 24,
   },
-  detailsGrid: {
+  minMaxRow: {
     flexDirection: 'row',
-    backgroundColor: COLORS.card,
-    borderRadius: 20,
-    padding: 20,
-    width: '100%',
-    justifyContent: 'space-around',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  detailItem: {
     alignItems: 'center',
-    flex: 1,
+    marginTop: 10,
+    marginBottom: 8,
   },
-  detailEmoji: {
-    fontSize: 24,
-    marginBottom: 6,
-  },
-  detailValue: {
+  minMaxText: {
     fontSize: SIZES.md,
-    fontWeight: '700',
-    color: COLORS.textWhite,
-    marginBottom: 2,
-  },
-  detailLabel: {
-    fontSize: SIZES.xs,
     color: COLORS.textLight,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontWeight: '600',
+  },
+  minMaxDivider: {
+    width: 1,
+    height: 14,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    marginHorizontal: 12,
   },
 });

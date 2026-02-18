@@ -1,6 +1,29 @@
 import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
-import HomeScreen from './src/screens/HomeScreen';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import TabNavigator from './src/navigation/TabNavigator';
+
+const DarkTheme = {
+  ...DefaultTheme,
+  dark: true,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: '#6dd5ed',
+    background: 'transparent',
+    card: 'rgba(0,0,0,0.5)',
+    text: '#FFFFFF',
+    border: 'transparent',
+    notification: '#ef4444',
+  },
+};
+
+function AppContent() {
+  return (
+    <NavigationContainer theme={DarkTheme}>
+      <TabNavigator />
+    </NavigationContainer>
+  );
+}
 
 export default function App() {
   if (Platform.OS === 'web') {
@@ -9,7 +32,7 @@ export default function App() {
         <View style={styles.phoneFrame}>
           <View style={styles.notch} />
           <View style={styles.phoneScreen}>
-            <HomeScreen />
+            <AppContent />
           </View>
           <View style={styles.homeBar} />
         </View>
@@ -17,7 +40,7 @@ export default function App() {
     );
   }
 
-  return <HomeScreen />;
+  return <AppContent />;
 }
 
 const styles = StyleSheet.create({

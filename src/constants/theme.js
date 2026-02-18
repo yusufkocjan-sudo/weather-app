@@ -10,6 +10,12 @@ export const COLORS = {
   border: 'rgba(255,255,255,0.3)',
   inputBg: 'rgba(255,255,255,0.25)',
   shadow: 'rgba(0,0,0,0.1)',
+  tabBar: 'rgba(0,0,0,0.3)',
+  tabBarBorder: 'rgba(255,255,255,0.1)',
+  success: '#10b981',
+  warning: '#f59e0b',
+  danger: '#ef4444',
+  info: '#3b82f6',
 };
 
 export const GRADIENTS = {
@@ -24,15 +30,22 @@ export const GRADIENTS = {
 };
 
 export const WEATHER_ICONS = {
-  '01d': '☀️', '01n': '🌙',
-  '02d': '⛅', '02n': '☁️',
-  '03d': '☁️', '03n': '☁️',
-  '04d': '☁️', '04n': '☁️',
-  '09d': '🌧️', '09n': '🌧️',
-  '10d': '🌦️', '10n': '🌧️',
-  '11d': '⛈️', '11n': '⛈️',
-  '13d': '❄️', '13n': '❄️',
-  '50d': '🌫️', '50n': '🌫️',
+  '01d': '\u2600\uFE0F', '01n': '\uD83C\uDF19',
+  '02d': '\u26C5', '02n': '\u2601\uFE0F',
+  '03d': '\u2601\uFE0F', '03n': '\u2601\uFE0F',
+  '04d': '\u2601\uFE0F', '04n': '\u2601\uFE0F',
+  '09d': '\uD83C\uDF27\uFE0F', '09n': '\uD83C\uDF27\uFE0F',
+  '10d': '\uD83C\uDF26\uFE0F', '10n': '\uD83C\uDF27\uFE0F',
+  '11d': '\u26C8\uFE0F', '11n': '\u26C8\uFE0F',
+  '13d': '\u2744\uFE0F', '13n': '\u2744\uFE0F',
+  '50d': '\uD83C\uDF2B\uFE0F', '50n': '\uD83C\uDF2B\uFE0F',
+};
+
+export const TAB_ICONS = {
+  home: '\uD83C\uDFE0',
+  forecast: '\uD83D\uDCC5',
+  explore: '\uD83E\uDDED',
+  settings: '\u2699\uFE0F',
 };
 
 export const FONTS = {

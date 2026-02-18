@@ -4,7 +4,7 @@ const BASE_URL = 'https://api.openweathermap.org/data/2.5';
 // Mock data for demo (used when API key is not yet active)
 const MOCK_CITIES = {
   london: {
-    current: { name: 'London', sys: { country: 'GB' }, main: { temp: 8, feels_like: 5, humidity: 78, pressure: 1012 }, wind: { speed: 5.2, deg: 220 }, weather: [{ main: 'Clouds', description: 'overcast clouds', icon: '04d' }] },
+    current: { name: 'London', sys: { country: 'GB', sunrise: 1708069200, sunset: 1708102800 }, main: { temp: 8, feels_like: 5, humidity: 78, pressure: 1012, temp_min: 5, temp_max: 10 }, wind: { speed: 5.2, deg: 220 }, visibility: 8000, weather: [{ main: 'Clouds', description: 'overcast clouds', icon: '04d' }] },
     forecast: [
       { dt: Date.now() / 1000 + 86400, dt_txt: getFutureDate(1), main: { temp: 9, temp_max: 11, temp_min: 6 }, weather: [{ icon: '03d' }] },
       { dt: Date.now() / 1000 + 172800, dt_txt: getFutureDate(2), main: { temp: 7, temp_max: 9, temp_min: 4 }, weather: [{ icon: '10d' }] },
@@ -14,7 +14,7 @@ const MOCK_CITIES = {
     ],
   },
   istanbul: {
-    current: { name: 'Istanbul', sys: { country: 'TR' }, main: { temp: 12, feels_like: 9, humidity: 65, pressure: 1018 }, wind: { speed: 4.1, deg: 180 }, weather: [{ main: 'Clear', description: 'clear sky', icon: '01d' }] },
+    current: { name: 'Istanbul', sys: { country: 'TR', sunrise: 1708065600, sunset: 1708103400 }, main: { temp: 12, feels_like: 9, humidity: 65, pressure: 1018, temp_min: 8, temp_max: 15 }, wind: { speed: 4.1, deg: 180 }, visibility: 10000, weather: [{ main: 'Clear', description: 'clear sky', icon: '01d' }] },
     forecast: [
       { dt: Date.now() / 1000 + 86400, dt_txt: getFutureDate(1), main: { temp: 14, temp_max: 16, temp_min: 9 }, weather: [{ icon: '02d' }] },
       { dt: Date.now() / 1000 + 172800, dt_txt: getFutureDate(2), main: { temp: 11, temp_max: 13, temp_min: 8 }, weather: [{ icon: '04d' }] },
@@ -24,7 +24,7 @@ const MOCK_CITIES = {
     ],
   },
   tokyo: {
-    current: { name: 'Tokyo', sys: { country: 'JP' }, main: { temp: 18, feels_like: 16, humidity: 55, pressure: 1015 }, wind: { speed: 3.6, deg: 90 }, weather: [{ main: 'Clear', description: 'clear sky', icon: '01d' }] },
+    current: { name: 'Tokyo', sys: { country: 'JP', sunrise: 1708038000, sunset: 1708076400 }, main: { temp: 18, feels_like: 16, humidity: 55, pressure: 1015, temp_min: 14, temp_max: 21 }, wind: { speed: 3.6, deg: 90 }, visibility: 16000, weather: [{ main: 'Clear', description: 'clear sky', icon: '01d' }] },
     forecast: [
       { dt: Date.now() / 1000 + 86400, dt_txt: getFutureDate(1), main: { temp: 19, temp_max: 21, temp_min: 14 }, weather: [{ icon: '01d' }] },
       { dt: Date.now() / 1000 + 172800, dt_txt: getFutureDate(2), main: { temp: 17, temp_max: 19, temp_min: 13 }, weather: [{ icon: '03d' }] },
@@ -34,7 +34,7 @@ const MOCK_CITIES = {
     ],
   },
   'new york': {
-    current: { name: 'New York', sys: { country: 'US' }, main: { temp: 5, feels_like: 1, humidity: 60, pressure: 1020 }, wind: { speed: 6.7, deg: 300 }, weather: [{ main: 'Snow', description: 'light snow', icon: '13d' }] },
+    current: { name: 'New York', sys: { country: 'US', sunrise: 1708087200, sunset: 1708124400 }, main: { temp: 5, feels_like: 1, humidity: 60, pressure: 1020, temp_min: -1, temp_max: 7 }, wind: { speed: 6.7, deg: 300 }, visibility: 5000, weather: [{ main: 'Snow', description: 'light snow', icon: '13d' }] },
     forecast: [
       { dt: Date.now() / 1000 + 86400, dt_txt: getFutureDate(1), main: { temp: 3, temp_max: 5, temp_min: -1 }, weather: [{ icon: '13d' }] },
       { dt: Date.now() / 1000 + 172800, dt_txt: getFutureDate(2), main: { temp: 6, temp_max: 8, temp_min: 2 }, weather: [{ icon: '04d' }] },
@@ -44,7 +44,7 @@ const MOCK_CITIES = {
     ],
   },
   paris: {
-    current: { name: 'Paris', sys: { country: 'FR' }, main: { temp: 10, feels_like: 7, humidity: 72, pressure: 1014 }, wind: { speed: 4.5, deg: 250 }, weather: [{ main: 'Rain', description: 'light rain', icon: '10d' }] },
+    current: { name: 'Paris', sys: { country: 'FR', sunrise: 1708069800, sunset: 1708105200 }, main: { temp: 10, feels_like: 7, humidity: 72, pressure: 1014, temp_min: 6, temp_max: 13 }, wind: { speed: 4.5, deg: 250 }, visibility: 7000, weather: [{ main: 'Rain', description: 'light rain', icon: '10d' }] },
     forecast: [
       { dt: Date.now() / 1000 + 86400, dt_txt: getFutureDate(1), main: { temp: 11, temp_max: 13, temp_min: 7 }, weather: [{ icon: '10d' }] },
       { dt: Date.now() / 1000 + 172800, dt_txt: getFutureDate(2), main: { temp: 9, temp_max: 11, temp_min: 6 }, weather: [{ icon: '04d' }] },
@@ -75,9 +75,10 @@ function getMockWeather(city) {
   return {
     current: {
       name: city.charAt(0).toUpperCase() + city.slice(1),
-      sys: { country: '--' },
-      main: { temp, feels_like: temp - 3, humidity: 50 + Math.floor(Math.random() * 40), pressure: 1010 + Math.floor(Math.random() * 15) },
+      sys: { country: '--', sunrise: Math.floor(Date.now() / 1000) - 21600, sunset: Math.floor(Date.now() / 1000) + 21600 },
+      main: { temp, feels_like: temp - 3, temp_min: temp - 3, temp_max: temp + 3, humidity: 50 + Math.floor(Math.random() * 40), pressure: 1010 + Math.floor(Math.random() * 15) },
       wind: { speed: (Math.random() * 8 + 1).toFixed(1), deg: Math.floor(Math.random() * 360) },
+      visibility: 8000 + Math.floor(Math.random() * 8000),
       weather: [w],
     },
     forecast: Array.from({ length: 5 }, (_, i) => ({

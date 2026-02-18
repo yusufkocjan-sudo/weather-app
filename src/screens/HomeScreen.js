@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, ScrollView, RefreshControl, ActivityIndicator,
+  View, Text, ScrollView, RefreshControl,
   StyleSheet, SafeAreaView, StatusBar, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,28 +10,33 @@ import { getRecentCities, addRecentCity, getUnits, setUnits as saveUnits } from 
 
 import SearchBar from '../components/SearchBar';
 import CurrentWeather from '../components/CurrentWeather';
-import ForecastList from '../components/ForecastList';
+import HourlyForecast from '../components/HourlyForecast';
+import DailyForecast from '../components/DailyForecast';
+import DetailGrid from '../components/DetailGrid';
+import WeatherParticles from '../components/WeatherParticles';
+import WhatToWear from '../components/WhatToWear';
+import SunTimeline from '../components/SunTimeline';
+import AirQuality from '../components/AirQuality';
 import RecentCities from '../components/RecentCities';
 import UnitToggle from '../components/UnitToggle';
+import { WeatherSkeleton } from '../components/SkeletonLoader';
 
 export default function HomeScreen() {
   const [weather, setWeather] = useState(null);
-  const [forecast, setForecast] = useState([]);
+  const [forecast, setForecast] = useState(null);
   const [recentCities, setRecentCities] = useState([]);
   const [units, setUnitsState] = useState('metric');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [gradient, setGradient] = useState(['#2193b0', '#6dd5ed']);
 
-  // Load saved data on mount
   useEffect(() => {
     (async () => {
       const savedUnits = await getUnits();
       setUnitsState(savedUnits);
       const cities = await getRecentCities();
       setRecentCities(cities);
-      // Load default city on start
       fetchWeather(cities.length > 0 ? cities[0] : 'Istanbul', savedUnits);
     })();
   }, []);
@@ -53,7 +58,7 @@ export default function HomeScreen() {
     } catch (err) {
       setError(err.message);
       setWeather(null);
-      setForecast([]);
+      setForecast(null);
     } finally {
       setLoading(false);
     }
@@ -78,12 +83,17 @@ export default function HomeScreen() {
     }
   };
 
+  const weatherMain = weather?.weather?.[0]?.main || '';
+
   return (
     <LinearGradient colors={gradient} style={styles.gradient}>
+      {/* Animated weather particles behind everything */}
+      <WeatherParticles weatherMain={weatherMain} />
+
       <SafeAreaView style={styles.safe}>
         <StatusBar barStyle="light-content" />
 
-        {/* Header */}
+        {/* Header row */}
         <View style={styles.header}>
           <View>
             <Text style={styles.headerTitle}>Weather</Text>
@@ -106,31 +116,46 @@ export default function HomeScreen() {
         >
           <SearchBar onSearch={handleSearch} />
 
+          {/* Loading skeleton */}
           {loading && !refreshing && (
-            <View style={styles.center}>
-              <ActivityIndicator size="large" color={COLORS.textWhite} />
-              <Text style={styles.loadingText}>Fetching weather...</Text>
-            </View>
+            <WeatherSkeleton />
           )}
 
-          {error && (
-            <View style={styles.center}>
-              <Text style={styles.errorIcon}>⚠️</Text>
+          {/* Error card */}
+          {error && !loading && (
+            <View style={styles.errorCard}>
+              <Text style={styles.errorIcon}>{'\u26A0\uFE0F'}</Text>
+              <Text style={styles.errorTitle}>Something went wrong</Text>
               <Text style={styles.errorText}>{error}</Text>
               <Text style={styles.errorHint}>Try searching for another city</Text>
             </View>
           )}
 
+          {/* Weather data */}
           {!loading && !error && weather && (
             <>
               <CurrentWeather data={weather} units={units} />
-              <ForecastList data={forecast} units={units} />
+              <HourlyForecast currentWeather={weather} units={units} />
+              <DetailGrid data={weather} units={units} />
+              <WhatToWear
+                temp={weather.main?.temp}
+                weatherMain={weatherMain}
+                units={units}
+              />
+              <SunTimeline
+                sunrise={weather.sys?.sunrise}
+                sunset={weather.sys?.sunset}
+              />
+              <AirQuality city={weather.name} />
+              <DailyForecast data={forecast} units={units} expanded={false} />
+              <RecentCities cities={recentCities} onSelect={handleSearch} />
             </>
           )}
 
+          {/* Welcome state */}
           {!loading && !error && !weather && (
-            <View style={styles.center}>
-              <Text style={styles.welcomeIcon}>🌤️</Text>
+            <View style={styles.welcomeContainer}>
+              <Text style={styles.welcomeIcon}>{'\uD83C\uDF24\uFE0F'}</Text>
               <Text style={styles.welcomeTitle}>Welcome to Weather App</Text>
               <Text style={styles.welcomeText}>
                 Search for a city to see the current weather and forecast
@@ -138,9 +163,8 @@ export default function HomeScreen() {
             </View>
           )}
 
-          <RecentCities cities={recentCities} onSelect={handleSearch} />
-
-          <View style={styles.spacer} />
+          {/* Bottom padding for tab bar */}
+          <View style={styles.bottomPadding} />
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -179,33 +203,44 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 16,
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
-  center: {
+  errorCard: {
     alignItems: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 40,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: SIZES.md,
-    color: COLORS.textLight,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+    marginHorizontal: 20,
+    marginTop: 20,
+    paddingVertical: 32,
+    paddingHorizontal: 24,
   },
   errorIcon: {
     fontSize: 48,
     marginBottom: 12,
   },
-  errorText: {
+  errorTitle: {
     fontSize: SIZES.lg,
-    fontWeight: '600',
+    fontWeight: '700',
     color: COLORS.textWhite,
+    marginBottom: 6,
+  },
+  errorText: {
+    fontSize: SIZES.md,
+    color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
   },
   errorHint: {
-    fontSize: SIZES.md,
+    fontSize: SIZES.sm,
     color: COLORS.textLight,
-    marginTop: 8,
+    marginTop: 10,
     textAlign: 'center',
+  },
+  welcomeContainer: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 40,
   },
   welcomeIcon: {
     fontSize: 64,
@@ -223,7 +258,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-  spacer: {
-    height: 40,
+  bottomPadding: {
+    height: 100,
   },
 });

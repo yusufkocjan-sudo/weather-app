@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../constants/theme';
 
 export default function RecentCities({ cities, onSelect }) {
@@ -7,15 +8,16 @@ export default function RecentCities({ cities, onSelect }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Recent Searches</Text>
+      <Text style={styles.sectionLabel}>Recent</Text>
       <View style={styles.chips}>
         {cities.map((city) => (
           <TouchableOpacity
             key={city}
             style={styles.chip}
             onPress={() => onSelect(city)}
+            activeOpacity={0.6}
           >
-            <Text style={styles.chipIcon}>📍</Text>
+            <Ionicons name="time-outline" size={12} color="rgba(255,255,255,0.4)" />
             <Text style={styles.chipText}>{city}</Text>
           </TouchableOpacity>
         ))}
@@ -27,37 +29,36 @@ export default function RecentCities({ cities, onSelect }) {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
-    marginTop: 28,
-    marginBottom: 12,
+    marginTop: 24,
   },
-  title: {
-    fontSize: SIZES.md,
+  sectionLabel: {
+    fontSize: 13,
     fontWeight: '600',
-    color: COLORS.textLight,
-    marginBottom: 12,
+    color: 'rgba(255,255,255,0.4)',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    marginBottom: 10,
+    marginLeft: 4,
   },
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: COLORS.card,
-    borderRadius: 24,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  chipIcon: {
-    fontSize: 14,
+    gap: 5,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 20,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   chipText: {
-    fontSize: SIZES.sm,
-    fontWeight: '500',
-    color: COLORS.textWhite,
+    fontSize: 13,
+    fontWeight: '400',
+    color: 'rgba(255,255,255,0.7)',
   },
 });

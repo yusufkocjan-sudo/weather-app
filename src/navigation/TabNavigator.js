@@ -1,7 +1,8 @@
 import React from 'react';
-import { Text, StyleSheet, View, Platform } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { COLORS, TAB_ICONS } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS } from '../constants/theme';
 
 import HomeScreen from '../screens/HomeScreen';
 import ForecastScreen from '../screens/ForecastScreen';
@@ -10,66 +11,30 @@ import SettingsScreen from '../screens/SettingsScreen';
 
 const Tab = createBottomTabNavigator();
 
-function TabIcon({ icon, focused }) {
-  return (
-    <Text style={[styles.tabIcon, focused && styles.tabIconActive]}>
-      {icon}
-    </Text>
-  );
-}
-
 export default function TabNavigator() {
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+          if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
+          else if (route.name === 'Forecast') iconName = focused ? 'calendar' : 'calendar-outline';
+          else if (route.name === 'Explore') iconName = focused ? 'compass' : 'compass-outline';
+          else if (route.name === 'Settings') iconName = focused ? 'settings' : 'settings-outline';
+          return <Ionicons name={iconName} size={22} color={color} />;
+        },
+        tabBarActiveTintColor: '#FFFFFF',
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.4)',
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: COLORS.textWhite,
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.5)',
         tabBarLabelStyle: styles.tabLabel,
         tabBarHideOnKeyboard: true,
-      }}
+      })}
     >
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          tabBarLabel: 'Home',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon icon={TAB_ICONS.home} focused={focused} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Forecast"
-        component={ForecastScreen}
-        options={{
-          tabBarLabel: 'Forecast',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon icon={TAB_ICONS.forecast} focused={focused} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Explore"
-        component={ExploreScreen}
-        options={{
-          tabBarLabel: 'Explore',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon icon={TAB_ICONS.explore} focused={focused} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{
-          tabBarLabel: 'Settings',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon icon={TAB_ICONS.settings} focused={focused} />
-          ),
-        }}
-      />
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Forecast" component={ForecastScreen} />
+      <Tab.Screen name="Explore" component={ExploreScreen} />
+      <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
 }
@@ -80,26 +45,18 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 70,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderTopColor: 'transparent',
-    borderTopWidth: 0,
+    height: 65,
+    backgroundColor: 'rgba(15, 15, 25, 0.85)',
+    borderTopWidth: 0.5,
+    borderTopColor: 'rgba(255,255,255,0.08)',
     elevation: 0,
     shadowOpacity: 0,
-    paddingBottom: Platform.OS === 'ios' ? 16 : 8,
-    paddingTop: 8,
+    paddingBottom: Platform.OS === 'ios' ? 16 : 6,
+    paddingTop: 6,
   },
   tabLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  tabIcon: {
-    fontSize: 22,
-    opacity: 0.5,
-  },
-  tabIconActive: {
-    fontSize: 26,
-    opacity: 1,
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 1,
   },
 });

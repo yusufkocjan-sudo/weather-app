@@ -1,34 +1,35 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../constants/theme';
 
 const CITIES = [
-  { name: 'London', country: 'UK', flag: '\uD83C\uDDEC\uD83C\uDDE7', mockTemp: 12, mockIcon: '\u2601\uFE0F' },
-  { name: 'New York', country: 'US', flag: '\uD83C\uDDFA\uD83C\uDDF8', mockTemp: 8, mockIcon: '\u26C5' },
-  { name: 'Tokyo', country: 'JP', flag: '\uD83C\uDDEF\uD83C\uDDF5', mockTemp: 15, mockIcon: '\u2600\uFE0F' },
-  { name: 'Paris', country: 'FR', flag: '\uD83C\uDDEB\uD83C\uDDF7', mockTemp: 11, mockIcon: '\uD83C\uDF27\uFE0F' },
-  { name: 'Istanbul', country: 'TR', flag: '\uD83C\uDDF9\uD83C\uDDF7', mockTemp: 14, mockIcon: '\u26C5' },
-  { name: 'Dubai', country: 'AE', flag: '\uD83C\uDDE6\uD83C\uDDEA', mockTemp: 32, mockIcon: '\u2600\uFE0F' },
-  { name: 'Sydney', country: 'AU', flag: '\uD83C\uDDE6\uD83C\uDDFA', mockTemp: 24, mockIcon: '\u2600\uFE0F' },
-  { name: 'Berlin', country: 'DE', flag: '\uD83C\uDDE9\uD83C\uDDEA', mockTemp: 7, mockIcon: '\u2601\uFE0F' },
+  { name: 'London', country: 'UK', mockTemp: 12, mockIcon: '\u2601\uFE0F' },
+  { name: 'New York', country: 'US', mockTemp: 8, mockIcon: '\u26C5' },
+  { name: 'Tokyo', country: 'JP', mockTemp: 15, mockIcon: '\u2600\uFE0F' },
+  { name: 'Paris', country: 'FR', mockTemp: 11, mockIcon: '\uD83C\uDF27\uFE0F' },
+  { name: 'Istanbul', country: 'TR', mockTemp: 14, mockIcon: '\u26C5' },
+  { name: 'Dubai', country: 'AE', mockTemp: 32, mockIcon: '\u2600\uFE0F' },
+  { name: 'Sydney', country: 'AU', mockTemp: 24, mockIcon: '\u2600\uFE0F' },
+  { name: 'Berlin', country: 'DE', mockTemp: 7, mockIcon: '\u2601\uFE0F' },
 ];
 
 function CityCard({ city, index, onSelect, units }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(30)).current;
+  const translateY = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 500,
-        delay: index * 80,
+        duration: 400,
+        delay: index * 60,
         useNativeDriver: true,
       }),
       Animated.timing(translateY, {
         toValue: 0,
-        duration: 500,
-        delay: index * 80,
+        duration: 400,
+        delay: index * 60,
         useNativeDriver: true,
       }),
     ]).start();
@@ -37,30 +38,24 @@ function CityCard({ city, index, onSelect, units }) {
   const tempDisplay = units === 'imperial'
     ? Math.round((city.mockTemp * 9) / 5 + 32)
     : city.mockTemp;
-  const unitSymbol = '\u00B0';
 
   return (
     <Animated.View
-      style={[
-        styles.cardWrapper,
-        {
-          opacity: fadeAnim,
-          transform: [{ translateY }],
-        },
-      ]}
+      style={[styles.cardWrapper, { opacity: fadeAnim, transform: [{ translateY }] }]}
     >
       <TouchableOpacity
         style={styles.card}
         onPress={() => onSelect && onSelect(city.name)}
         activeOpacity={0.7}
       >
-        <View style={styles.cardHeader}>
-          <Text style={styles.flag}>{city.flag}</Text>
+        <View style={styles.cardTop}>
+          <View>
+            <Text style={styles.cityName}>{city.name}</Text>
+            <Text style={styles.countryName}>{city.country}</Text>
+          </View>
           <Text style={styles.weatherIcon}>{city.mockIcon}</Text>
         </View>
-        <Text style={styles.cityName}>{city.name}</Text>
-        <Text style={styles.countryName}>{city.country}</Text>
-        <Text style={styles.temp}>{tempDisplay}{unitSymbol}</Text>
+        <Text style={styles.temp}>{tempDisplay}{'\u00B0'}</Text>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -69,7 +64,7 @@ function CityCard({ city, index, onSelect, units }) {
 export default function PopularCities({ onSelect, units = 'metric' }) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Popular Cities</Text>
+      <Text style={styles.sectionLabel}>Popular Cities</Text>
       <View style={styles.grid}>
         {CITIES.map((city, index) => (
           <CityCard
@@ -88,13 +83,15 @@ export default function PopularCities({ onSelect, units = 'metric' }) {
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 20,
-    marginTop: 20,
   },
-  title: {
-    fontSize: SIZES.lg,
-    fontWeight: '700',
-    color: COLORS.textWhite,
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.4)',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
     marginBottom: 12,
+    marginLeft: 4,
   },
   grid: {
     flexDirection: 'row',
@@ -103,41 +100,37 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     width: '48%',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 14,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.08)',
     padding: 14,
   },
-  cardHeader: {
+  cardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  flag: {
-    fontSize: 22,
-  },
-  weatherIcon: {
-    fontSize: 22,
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
   cityName: {
-    fontSize: SIZES.base,
-    fontWeight: '700',
-    color: COLORS.textWhite,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   countryName: {
-    fontSize: SIZES.xs,
-    color: COLORS.textLight,
-    marginTop: 2,
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.4)',
+    marginTop: 1,
+  },
+  weatherIcon: {
+    fontSize: 24,
   },
   temp: {
-    fontSize: SIZES.xl,
-    fontWeight: '800',
-    color: COLORS.textWhite,
-    marginTop: 6,
+    fontSize: 28,
+    fontWeight: '300',
+    color: '#FFFFFF',
   },
 });

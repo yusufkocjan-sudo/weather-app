@@ -1,11 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { View, TextInput, TouchableOpacity, Animated, StyleSheet } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../constants/theme';
 
 export default function SearchBar({ onSearch }) {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
-
   const borderColorAnim = useRef(new Animated.Value(0)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -14,7 +14,7 @@ export default function SearchBar({ onSearch }) {
     setIsFocused(true);
     Animated.timing(borderColorAnim, {
       toValue: 1,
-      duration: 300,
+      duration: 250,
       useNativeDriver: false,
     }).start();
   };
@@ -23,25 +23,24 @@ export default function SearchBar({ onSearch }) {
     setIsFocused(false);
     Animated.timing(borderColorAnim, {
       toValue: 0,
-      duration: 300,
+      duration: 250,
       useNativeDriver: false,
     }).start();
   };
 
   const triggerShake = () => {
     Animated.sequence([
-      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
       Animated.timing(shakeAnim, { toValue: 8, duration: 50, useNativeDriver: true }),
       Animated.timing(shakeAnim, { toValue: -8, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 4, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 5, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -5, duration: 50, useNativeDriver: true }),
       Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
     ]).start();
   };
 
   const triggerBtnPress = () => {
     Animated.sequence([
-      Animated.timing(scaleAnim, { toValue: 0.85, duration: 80, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 0.88, duration: 80, useNativeDriver: true }),
       Animated.timing(scaleAnim, { toValue: 1, duration: 80, useNativeDriver: true }),
     ]).start();
   };
@@ -59,7 +58,7 @@ export default function SearchBar({ onSearch }) {
 
   const interpolatedBorderColor = borderColorAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [COLORS.border, '#FFFFFF'],
+    outputRange: ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.25)'],
   });
 
   return (
@@ -73,10 +72,11 @@ export default function SearchBar({ onSearch }) {
           },
         ]}
       >
+        <Feather name="search" size={16} color="rgba(255,255,255,0.35)" style={styles.searchIcon} />
         <TextInput
           style={styles.input}
           placeholder="Search city..."
-          placeholderTextColor="rgba(255,255,255,0.45)"
+          placeholderTextColor="rgba(255,255,255,0.3)"
           value={query}
           onChangeText={setQuery}
           onSubmitEditing={handleSubmit}
@@ -91,9 +91,9 @@ export default function SearchBar({ onSearch }) {
           activeOpacity={0.7}
         >
           <Animated.View
-            style={[styles.iconCircle, { transform: [{ scale: scaleAnim }] }]}
+            style={[styles.btnCircle, { transform: [{ scale: scaleAnim }] }]}
           >
-            <SearchIcon />
+            <Feather name="arrow-right" size={16} color="#FFFFFF" />
           </Animated.View>
         </TouchableOpacity>
       </Animated.View>
@@ -101,78 +101,40 @@ export default function SearchBar({ onSearch }) {
   );
 }
 
-function SearchIcon() {
-  return (
-    <View style={styles.searchIconWrap}>
-      <View style={styles.searchLens} />
-      <View style={styles.searchHandle} />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.inputBg,
-    borderRadius: 18,
-    borderWidth: 1.5,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 14,
+    borderWidth: 1,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+  },
+  searchIcon: {
+    marginLeft: 14,
   },
   input: {
     flex: 1,
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    fontSize: SIZES.base,
-    color: COLORS.textWhite,
-    fontWeight: '500',
+    paddingVertical: 13,
+    paddingHorizontal: 10,
+    fontSize: 15,
+    color: '#FFFFFF',
+    fontWeight: '400',
   },
   searchBtn: {
-    paddingRight: 8,
+    paddingRight: 6,
     paddingLeft: 4,
   },
-  iconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+  btnCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-  },
-  searchIconWrap: {
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  searchLens: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 2.5,
-    borderColor: COLORS.textWhite,
-    marginTop: -2,
-    marginLeft: -2,
-  },
-  searchHandle: {
-    width: 2.5,
-    height: 7,
-    backgroundColor: COLORS.textWhite,
-    position: 'absolute',
-    bottom: 0,
-    right: 1,
-    transform: [{ rotate: '-45deg' }],
-    borderRadius: 1.5,
   },
 });

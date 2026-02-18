@@ -1,95 +1,54 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated, StyleSheet } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../constants/theme';
 import { formatTemp, getWeatherIcon, capitalizeFirst } from '../utils/helpers';
 import AnimatedNumber from './AnimatedNumber';
 
 export default function CurrentWeather({ data, units }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-  const iconScale = useRef(new Animated.Value(0.5)).current;
-  const iconPulse = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
     if (!data) return;
 
     fadeAnim.setValue(0);
-    slideAnim.setValue(30);
-    iconScale.setValue(0.5);
+    slideAnim.setValue(20);
 
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 700,
+        duration: 600,
         useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration: 700,
-        useNativeDriver: true,
-      }),
-      Animated.spring(iconScale, {
-        toValue: 1,
-        friction: 4,
-        tension: 50,
+        duration: 600,
         useNativeDriver: true,
       }),
     ]).start();
-
-    const pulseAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(iconPulse, {
-          toValue: 1.08,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(iconPulse, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    pulseAnimation.start();
-
-    return () => pulseAnimation.stop();
   }, [data]);
 
   if (!data) return null;
 
   const icon = getWeatherIcon(data.weather[0].icon);
   const description = capitalizeFirst(data.weather[0].description);
-  const unitSymbol = units === 'metric' ? '\u00B0C' : '\u00B0F';
+  const unitSymbol = units === 'metric' ? '\u00B0' : '\u00B0';
   const feelsLikeTemp = formatTemp(data.main.feels_like);
 
   return (
     <Animated.View
       style={[
         styles.container,
-        {
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }],
-        },
+        { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
       ]}
     >
-      {/* City & Country */}
-      <Animated.Text style={[styles.city, { opacity: fadeAnim }]}>
+      <Text style={styles.city}>
         {data.name}, {data.sys.country}
-      </Animated.Text>
+      </Text>
 
-      {/* Large Weather Icon with Pulse */}
-      <Animated.View
-        style={[
-          styles.iconWrap,
-          {
-            transform: [{ scale: Animated.multiply(iconScale, iconPulse) }],
-          },
-        ]}
-      >
-        <Text style={styles.icon}>{icon}</Text>
-      </Animated.View>
+      <Text style={styles.icon}>{icon}</Text>
 
-      {/* Animated Temperature */}
       <View style={styles.tempRow}>
         <AnimatedNumber
           value={data.main.temp}
@@ -98,26 +57,23 @@ export default function CurrentWeather({ data, units }) {
         />
       </View>
 
-      {/* Description */}
-      <Animated.Text style={[styles.description, { opacity: fadeAnim }]}>
-        {description}
-      </Animated.Text>
+      <Text style={styles.description}>{description}</Text>
 
-      {/* Feels Like */}
-      <Animated.Text style={[styles.feelsLike, { opacity: fadeAnim }]}>
+      <Text style={styles.feelsLike}>
         Feels like {feelsLikeTemp}{unitSymbol}
-      </Animated.Text>
+      </Text>
 
-      {/* Min / Max */}
-      <Animated.View style={[styles.minMaxRow, { opacity: fadeAnim }]}>
+      <View style={styles.minMaxRow}>
+        <Feather name="arrow-down" size={14} color="rgba(255,255,255,0.5)" />
         <Text style={styles.minMaxText}>
-          {'\u2B07\uFE0F'} {formatTemp(data.main.temp_min)}{'\u00B0'}
+          {formatTemp(data.main.temp_min)}{unitSymbol}
         </Text>
-        <View style={styles.minMaxDivider} />
+        <View style={styles.minMaxDot} />
+        <Feather name="arrow-up" size={14} color="rgba(255,255,255,0.5)" />
         <Text style={styles.minMaxText}>
-          {'\u2B06\uFE0F'} {formatTemp(data.main.temp_max)}{'\u00B0'}
+          {formatTemp(data.main.temp_max)}{unitSymbol}
         </Text>
-      </Animated.View>
+      </View>
     </Animated.View>
   );
 }
@@ -126,59 +82,57 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
   city: {
-    fontSize: SIZES.xl,
-    fontWeight: '600',
-    color: COLORS.textWhite,
-    marginBottom: 4,
-    letterSpacing: 0.5,
-  },
-  iconWrap: {
-    marginVertical: 4,
+    fontSize: 18,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.85)',
+    marginBottom: 2,
+    letterSpacing: 0.3,
   },
   icon: {
-    fontSize: 100,
+    fontSize: 72,
+    marginVertical: 0,
   },
   tempRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginTop: 2,
   },
   temp: {
-    fontSize: SIZES.huge,
-    fontWeight: '800',
-    color: COLORS.textWhite,
-    letterSpacing: -2,
+    fontSize: 76,
+    fontWeight: '200',
+    color: '#FFFFFF',
+    letterSpacing: -3,
   },
   description: {
-    fontSize: SIZES.lg,
+    fontSize: 16,
     fontWeight: '500',
-    color: COLORS.textWhite,
-    marginTop: 4,
-    textTransform: 'capitalize',
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 0,
   },
   feelsLike: {
-    fontSize: SIZES.md,
-    color: COLORS.textLight,
+    fontSize: 13,
+    fontWeight: '400',
+    color: 'rgba(255,255,255,0.5)',
     marginTop: 4,
   },
   minMaxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 8,
+    marginTop: 8,
+    gap: 4,
   },
   minMaxText: {
-    fontSize: SIZES.md,
-    color: COLORS.textLight,
-    fontWeight: '600',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.6)',
+    fontWeight: '500',
   },
-  minMaxDivider: {
-    width: 1,
-    height: 14,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    marginHorizontal: 12,
+  minMaxDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    marginHorizontal: 8,
   },
 });

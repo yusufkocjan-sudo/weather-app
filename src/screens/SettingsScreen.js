@@ -1,71 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TextInput,
-  TouchableOpacity, SafeAreaView, StatusBar, Platform,
-  Animated, Switch,
+  TouchableOpacity, SafeAreaView, StatusBar, Platform, Switch,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused } from '@react-navigation/native';
 import { COLORS, SIZES } from '../constants/theme';
 import { getUnits, setUnits as saveUnits } from '../utils/storage';
 
-// Custom iOS-style animated unit switch
-function UnitSwitch({ isMetric, onToggle }) {
-  const animValue = useRef(new Animated.Value(isMetric ? 0 : 1)).current;
-
-  useEffect(() => {
-    Animated.spring(animValue, {
-      toValue: isMetric ? 0 : 1,
-      useNativeDriver: false,
-      friction: 8,
-      tension: 60,
-    }).start();
-  }, [isMetric]);
-
-  const translateX = animValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: [2, 42],
-  });
-
-  const trackColor = animValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['#3b82f6', '#f59e0b'],
-  });
-
-  return (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={onToggle}
-      style={styles.unitSwitchContainer}
-    >
-      <Text style={[styles.unitLabel, isMetric && styles.unitLabelActive]}>
-        {'\u00B0'}C
-      </Text>
-      <Animated.View style={[styles.unitSwitchTrack, { backgroundColor: trackColor }]}>
-        <Animated.View
-          style={[
-            styles.unitSwitchThumb,
-            { transform: [{ translateX }] },
-          ]}
-        >
-          <Text style={styles.unitThumbText}>
-            {isMetric ? '\u00B0C' : '\u00B0F'}
-          </Text>
-        </Animated.View>
-      </Animated.View>
-      <Text style={[styles.unitLabel, !isMetric && styles.unitLabelActive]}>
-        {'\u00B0'}F
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
-// Settings section card with glassmorphism
-function SectionCard({ title, icon, children }) {
+function SectionCard({ title, iconName, children }) {
   return (
     <View style={styles.sectionCard}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionIcon}>{icon}</Text>
+        <Ionicons name={iconName} size={18} color="rgba(255,255,255,0.6)" />
         <Text style={styles.sectionTitle}>{title}</Text>
       </View>
       {children}
@@ -73,7 +21,6 @@ function SectionCard({ title, icon, children }) {
   );
 }
 
-// Settings row
 function SettingsRow({ label, subtitle, rightContent }) {
   return (
     <View style={styles.settingsRow}>
@@ -92,8 +39,6 @@ export default function SettingsScreen() {
   const [cityInput, setCityInput] = useState('');
   const [dailyForecast, setDailyForecast] = useState(true);
   const [severeAlerts, setSevereAlerts] = useState(true);
-  const [tempDrops, setTempDrops] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(null);
   const isFocused = useIsFocused();
 
   useEffect(() => {
@@ -101,7 +46,6 @@ export default function SettingsScreen() {
       (async () => {
         const savedUnits = await getUnits();
         setUnitsState(savedUnits);
-        setLastUpdated(new Date());
       })();
     }
   }, [isFocused]);
@@ -119,15 +63,8 @@ export default function SettingsScreen() {
     }
   };
 
-  const getMinutesAgo = () => {
-    if (!lastUpdated) return 'N/A';
-    const diff = Math.round((new Date() - lastUpdated) / 60000);
-    if (diff < 1) return 'Just now';
-    return `${diff} minute${diff !== 1 ? 's' : ''} ago`;
-  };
-
   return (
-    <LinearGradient colors={['#1e293b', '#334155', '#1e293b']} style={styles.gradient}>
+    <LinearGradient colors={['#0f172a', '#1e293b']} style={styles.gradient}>
       <SafeAreaView style={styles.safe}>
         <StatusBar barStyle="light-content" />
 
@@ -140,135 +77,84 @@ export default function SettingsScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Units Section */}
-          <SectionCard title="Units" icon={'\uD83C\uDF21\uFE0F'}>
+          <SectionCard title="Units" iconName="thermometer-outline">
             <SettingsRow
-              label="Temperature Unit"
+              label="Temperature"
               subtitle={units === 'metric' ? 'Celsius' : 'Fahrenheit'}
               rightContent={
-                <UnitSwitch
-                  isMetric={units === 'metric'}
-                  onToggle={handleUnitToggle}
-                />
+                <TouchableOpacity
+                  onPress={handleUnitToggle}
+                  style={[styles.unitBtn, units === 'imperial' && styles.unitBtnActive]}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.unitBtnText}>
+                    {units === 'metric' ? '\u00B0C' : '\u00B0F'}
+                  </Text>
+                </TouchableOpacity>
               }
             />
           </SectionCard>
 
-          {/* Default City Section */}
-          <SectionCard title="Default City" icon={'\uD83D\uDCCD'}>
-            <SettingsRow
-              label="Current default"
-              subtitle={defaultCity}
-            />
+          <SectionCard title="Default City" iconName="location-outline">
+            <SettingsRow label="Current" subtitle={defaultCity} />
             <View style={styles.cityInputRow}>
               <TextInput
                 style={styles.cityInput}
-                placeholder="Enter new default city..."
-                placeholderTextColor="rgba(255,255,255,0.35)"
+                placeholder="Enter city name..."
+                placeholderTextColor="rgba(255,255,255,0.25)"
                 value={cityInput}
                 onChangeText={setCityInput}
                 onSubmitEditing={handleSetDefaultCity}
                 returnKeyType="done"
               />
               <TouchableOpacity
-                style={[
-                  styles.cityInputButton,
-                  !cityInput.trim() && styles.cityInputButtonDisabled,
-                ]}
+                style={[styles.saveBtn, !cityInput.trim() && styles.saveBtnDisabled]}
                 onPress={handleSetDefaultCity}
                 disabled={!cityInput.trim()}
               >
-                <Text style={styles.cityInputButtonText}>Save</Text>
+                <Text style={styles.saveBtnText}>Save</Text>
               </TouchableOpacity>
             </View>
           </SectionCard>
 
-          {/* Notifications Section */}
-          <SectionCard title="Notifications" icon={'\uD83D\uDD14'}>
+          <SectionCard title="Notifications" iconName="notifications-outline">
             <SettingsRow
               label="Daily forecast"
-              subtitle="Get weather updates each morning"
+              subtitle="Morning weather updates"
               rightContent={
                 <Switch
                   value={dailyForecast}
                   onValueChange={setDailyForecast}
-                  trackColor={{ false: 'rgba(255,255,255,0.15)', true: 'rgba(59,130,246,0.5)' }}
-                  thumbColor={dailyForecast ? '#3b82f6' : '#94a3b8'}
-                  ios_backgroundColor="rgba(255,255,255,0.15)"
+                  trackColor={{ false: 'rgba(255,255,255,0.1)', true: 'rgba(59,130,246,0.4)' }}
+                  thumbColor={dailyForecast ? '#3b82f6' : '#64748b'}
                 />
               }
             />
             <View style={styles.rowDivider} />
             <SettingsRow
-              label="Severe weather alerts"
-              subtitle="Storms, extreme heat or cold"
+              label="Severe weather"
+              subtitle="Storm and extreme alerts"
               rightContent={
                 <Switch
                   value={severeAlerts}
                   onValueChange={setSevereAlerts}
-                  trackColor={{ false: 'rgba(255,255,255,0.15)', true: 'rgba(239,68,68,0.5)' }}
-                  thumbColor={severeAlerts ? '#ef4444' : '#94a3b8'}
-                  ios_backgroundColor="rgba(255,255,255,0.15)"
-                />
-              }
-            />
-            <View style={styles.rowDivider} />
-            <SettingsRow
-              label="Temperature drops"
-              subtitle="Alert when temp drops 10+ degrees"
-              rightContent={
-                <Switch
-                  value={tempDrops}
-                  onValueChange={setTempDrops}
-                  trackColor={{ false: 'rgba(255,255,255,0.15)', true: 'rgba(245,158,11,0.5)' }}
-                  thumbColor={tempDrops ? '#f59e0b' : '#94a3b8'}
-                  ios_backgroundColor="rgba(255,255,255,0.15)"
+                  trackColor={{ false: 'rgba(255,255,255,0.1)', true: 'rgba(239,68,68,0.4)' }}
+                  thumbColor={severeAlerts ? '#ef4444' : '#64748b'}
                 />
               }
             />
           </SectionCard>
 
-          {/* Data Section */}
-          <SectionCard title="Data" icon={'\uD83D\uDDC4\uFE0F'}>
+          <SectionCard title="About" iconName="information-circle-outline">
             <SettingsRow
-              label="Last updated"
-              subtitle={getMinutesAgo()}
+              label="Version"
+              rightContent={<Text style={styles.versionText}>1.0.0</Text>}
             />
             <View style={styles.rowDivider} />
-            <TouchableOpacity
-              style={styles.clearCacheButton}
-              onPress={() => setLastUpdated(new Date())}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.clearCacheText}>Clear Cache</Text>
-              <Text style={styles.clearCacheIcon}>{'\uD83D\uDDD1\uFE0F'}</Text>
-            </TouchableOpacity>
+            <SettingsRow label="Data source" subtitle="OpenWeatherMap" />
           </SectionCard>
 
-          {/* About Section */}
-          <SectionCard title="About" icon={'\u2139\uFE0F'}>
-            <SettingsRow
-              label="App version"
-              rightContent={
-                <View style={styles.versionBadge}>
-                  <Text style={styles.versionText}>1.0.0</Text>
-                </View>
-              }
-            />
-            <View style={styles.rowDivider} />
-            <SettingsRow
-              label="Built with"
-              subtitle="React Native & Expo"
-            />
-            <View style={styles.rowDivider} />
-            <SettingsRow
-              label="Weather data"
-              subtitle="OpenWeatherMap"
-            />
-          </SectionCard>
-
-          {/* Bottom padding for tab bar */}
-          <View style={styles.bottomPadding} />
+          <View style={{ height: 90 }} />
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -276,196 +162,125 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
+  gradient: { flex: 1 },
   safe: {
     flex: 1,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 12,
     paddingBottom: 8,
   },
   headerTitle: {
-    fontSize: SIZES.xxl,
-    fontWeight: '800',
-    color: COLORS.textWhite,
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
     letterSpacing: -0.5,
   },
-  scroll: {
-    flex: 1,
-  },
+  scroll: { flex: 1 },
   scrollContent: {
     paddingTop: 16,
-    paddingBottom: 20,
   },
-
-  // Section card — glassmorphism
   sectionCard: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
     marginHorizontal: 20,
-    marginBottom: 16,
+    marginBottom: 12,
     padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-  },
-  sectionIcon: {
-    fontSize: 20,
-    marginRight: 8,
+    marginBottom: 14,
+    gap: 8,
   },
   sectionTitle: {
-    fontSize: SIZES.lg,
-    fontWeight: '700',
-    color: COLORS.textWhite,
+    fontSize: 13,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.5)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
-
-  // Settings row
   settingsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   settingsRowLeft: {
     flex: 1,
     marginRight: 12,
   },
   settingsLabel: {
-    fontSize: SIZES.base,
-    fontWeight: '600',
-    color: COLORS.textWhite,
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#FFFFFF',
   },
   settingsSubtitle: {
-    fontSize: SIZES.sm,
-    color: COLORS.textLight,
-    marginTop: 2,
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.4)',
+    marginTop: 1,
   },
   rowDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    height: 0.5,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     marginVertical: 8,
   },
-
-  // Unit switch
-  unitSwitchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  unitBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(59,130,246,0.2)',
+    borderRadius: 8,
+    borderWidth: 0.5,
+    borderColor: 'rgba(59,130,246,0.3)',
   },
-  unitLabel: {
-    fontSize: SIZES.md,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.35)',
+  unitBtnActive: {
+    backgroundColor: 'rgba(245,158,11,0.2)',
+    borderColor: 'rgba(245,158,11,0.3)',
   },
-  unitLabelActive: {
-    color: COLORS.textWhite,
+  unitBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
-  unitSwitchTrack: {
-    width: 76,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  unitSwitchThumb: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.textWhite,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  unitThumbText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#1e293b',
-  },
-
-  // City input
   cityInputRow: {
     flexDirection: 'row',
-    marginTop: 12,
+    marginTop: 10,
     gap: 8,
   },
   cityInput: {
     flex: 1,
-    height: 44,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    fontSize: SIZES.md,
-    color: COLORS.textWhite,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    height: 40,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  cityInputButton: {
-    height: 44,
-    paddingHorizontal: 20,
-    backgroundColor: '#3b82f6',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cityInputButtonDisabled: {
+  saveBtn: {
+    height: 40,
+    paddingHorizontal: 18,
     backgroundColor: 'rgba(59,130,246,0.3)',
-  },
-  cityInputButtonText: {
-    fontSize: SIZES.md,
-    fontWeight: '700',
-    color: COLORS.textWhite,
-  },
-
-  // Clear cache
-  clearCacheButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderRadius: 10,
     justifyContent: 'center',
-    backgroundColor: 'rgba(239,68,68,0.15)',
-    borderRadius: 12,
-    paddingVertical: 12,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(239,68,68,0.25)',
+    alignItems: 'center',
   },
-  clearCacheText: {
-    fontSize: SIZES.md,
+  saveBtnDisabled: {
+    opacity: 0.3,
+  },
+  saveBtnText: {
+    fontSize: 14,
     fontWeight: '600',
-    color: '#fca5a5',
-    marginRight: 6,
-  },
-  clearCacheIcon: {
-    fontSize: 16,
-  },
-
-  // Version badge
-  versionBadge: {
-    backgroundColor: 'rgba(59,130,246,0.2)',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(59,130,246,0.3)',
+    color: '#FFFFFF',
   },
   versionText: {
-    fontSize: SIZES.sm,
-    fontWeight: '700',
-    color: '#93c5fd',
-  },
-
-  bottomPadding: {
-    height: 100,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.4)',
+    fontWeight: '500',
   },
 });

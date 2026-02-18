@@ -3,30 +3,29 @@ export const COLORS = {
   black: '#000000',
   text: '#1F2937',
   textSecondary: '#6B7280',
-  textLight: 'rgba(255,255,255,0.7)',
+  textLight: 'rgba(255,255,255,0.55)',
   textWhite: '#FFFFFF',
-  card: 'rgba(255,255,255,0.2)',
-  cardSolid: 'rgba(255,255,255,0.25)',
-  border: 'rgba(255,255,255,0.3)',
-  inputBg: 'rgba(255,255,255,0.25)',
+  card: 'rgba(255,255,255,0.08)',
+  cardLight: 'rgba(255,255,255,0.12)',
+  border: 'rgba(255,255,255,0.1)',
+  borderLight: 'rgba(255,255,255,0.06)',
+  inputBg: 'rgba(255,255,255,0.12)',
   shadow: 'rgba(0,0,0,0.1)',
-  tabBar: 'rgba(0,0,0,0.3)',
-  tabBarBorder: 'rgba(255,255,255,0.1)',
-  success: '#10b981',
-  warning: '#f59e0b',
-  danger: '#ef4444',
-  info: '#3b82f6',
+  success: '#34d399',
+  warning: '#fbbf24',
+  danger: '#f87171',
+  info: '#60a5fa',
 };
 
 export const GRADIENTS = {
-  clear: ['#4DA0B0', '#D39D38'],
-  clouds: ['#616161', '#9BC5C3'],
-  rain: ['#0F2027', '#203A43', '#2C5364'],
-  drizzle: ['#3A7BD5', '#3A6073'],
-  thunderstorm: ['#0F0C29', '#302B63', '#24243E'],
-  snow: ['#E6DADA', '#274046'],
-  mist: ['#757F9A', '#D7DDE8'],
-  default: ['#2193b0', '#6dd5ed'],
+  clear: ['#2563eb', '#7c3aed'],
+  clouds: ['#475569', '#64748b'],
+  rain: ['#1e293b', '#334155', '#475569'],
+  drizzle: ['#1e3a5f', '#2d4a6f'],
+  thunderstorm: ['#0f172a', '#1e1b4b', '#312e81'],
+  snow: ['#94a3b8', '#cbd5e1'],
+  mist: ['#6b7280', '#9ca3af'],
+  default: ['#1e40af', '#3b82f6'],
 };
 
 export const WEATHER_ICONS = {
@@ -41,19 +40,6 @@ export const WEATHER_ICONS = {
   '50d': '\uD83C\uDF2B\uFE0F', '50n': '\uD83C\uDF2B\uFE0F',
 };
 
-export const TAB_ICONS = {
-  home: '\uD83C\uDFE0',
-  forecast: '\uD83D\uDCC5',
-  explore: '\uD83E\uDDED',
-  settings: '\u2699\uFE0F',
-};
-
-export const FONTS = {
-  regular: 'System',
-  medium: 'System',
-  bold: 'System',
-};
-
 export const SIZES = {
   xs: 10,
   sm: 12,
@@ -61,9 +47,9 @@ export const SIZES = {
   base: 16,
   lg: 18,
   xl: 24,
-  xxl: 32,
+  xxl: 28,
   xxxl: 48,
-  huge: 72,
+  huge: 76,
 };
 
 export function getGradient(weatherMain) {

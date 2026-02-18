@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
   SafeAreaView, StatusBar, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused } from '@react-navigation/native';
 import { COLORS, SIZES } from '../constants/theme';
 import { getForecast } from '../services/weatherApi';
 import { getUnits } from '../utils/storage';
-import { formatTemp } from '../utils/helpers';
 
 import SearchBar from '../components/SearchBar';
 import DailyForecast from '../components/DailyForecast';
@@ -21,7 +21,6 @@ export default function ForecastScreen() {
   const [loading, setLoading] = useState(true);
   const isFocused = useIsFocused();
 
-  // Reload units from storage every time this tab is focused
   useEffect(() => {
     if (isFocused) {
       (async () => {
@@ -31,7 +30,6 @@ export default function ForecastScreen() {
     }
   }, [isFocused]);
 
-  // Fetch forecast whenever city or units change
   useEffect(() => {
     fetchForecast(city, units);
   }, [city, units]);
@@ -48,14 +46,10 @@ export default function ForecastScreen() {
     }
   };
 
-  const handleSearch = (newCity) => {
-    setCity(newCity);
-  };
+  const handleSearch = (newCity) => setCity(newCity);
 
-  // Compute temperature range info from forecast
   const getDailyStats = () => {
     if (!forecast) return [];
-    // Handle both array format and object with .list
     const items = Array.isArray(forecast) ? forecast : forecast.list;
     if (!items || items.length === 0) return [];
 
@@ -71,8 +65,7 @@ export default function ForecastScreen() {
         dayMap[date].max = Math.max(dayMap[date].max, tempMax);
       }
     });
-    const days = Object.entries(dayMap).slice(0, 5);
-    return days.map(([date, info]) => ({
+    return Object.entries(dayMap).slice(0, 5).map(([date, info]) => ({
       date,
       min: Math.round(info.min),
       max: Math.round(info.max),
@@ -86,7 +79,6 @@ export default function ForecastScreen() {
   const globalMax = dailyStats.length > 0 ? Math.max(...dailyStats.map((d) => d.max)) : 30;
   const tempRange = globalMax - globalMin || 1;
 
-  // Determine predominant condition
   const getWeeklySummary = () => {
     if (dailyStats.length === 0) return '';
     const conditions = dailyStats.map((d) => d.weather.main);
@@ -94,16 +86,16 @@ export default function ForecastScreen() {
     conditions.forEach((c) => { counts[c] = (counts[c] || 0) + 1; });
     const dominant = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
     const suffix = units === 'metric' ? '\u00B0C' : '\u00B0F';
-    return `This week will be mostly ${dominant.toLowerCase()} with temperatures ranging from ${globalMin}${suffix} to ${globalMax}${suffix}.`;
+    return `Mostly ${dominant.toLowerCase()} this week, ${globalMin}${suffix} to ${globalMax}${suffix}.`;
   };
 
   return (
-    <LinearGradient colors={['#0f2027', '#203a43', '#2c5364']} style={styles.gradient}>
+    <LinearGradient colors={['#0f172a', '#1e293b', '#334155']} style={styles.gradient}>
       <SafeAreaView style={styles.safe}>
         <StatusBar barStyle="light-content" />
 
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>5-Day Forecast</Text>
+          <Text style={styles.headerTitle}>Forecast</Text>
           <Text style={styles.headerSubtitle}>{city}</Text>
         </View>
 
@@ -118,47 +110,40 @@ export default function ForecastScreen() {
 
           {!loading && forecast && (
             <>
-              {/* Expanded daily forecast */}
               <DailyForecast data={forecast} units={units} expanded={true} />
 
-              {/* Temperature range chart */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Temperature Range</Text>
+                <Text style={styles.sectionLabel}>Temperature Range</Text>
                 <View style={styles.chartCard}>
                   {dailyStats.map((day, index) => {
                     const leftPct = ((day.min - globalMin) / tempRange) * 100;
                     const widthPct = ((day.max - day.min) / tempRange) * 100;
-                    const suffix = units === 'metric' ? '\u00B0' : '\u00B0';
 
                     return (
                       <View key={index} style={styles.chartRow}>
                         <Text style={styles.chartDay}>{day.dayName}</Text>
-                        <Text style={styles.chartMinLabel}>{day.min}{suffix}</Text>
+                        <Text style={styles.chartMinLabel}>{day.min}{'\u00B0'}</Text>
                         <View style={styles.chartBarTrack}>
                           <LinearGradient
-                            colors={['#3b82f6', '#f59e0b', '#ef4444']}
+                            colors={['#60a5fa', '#fbbf24']}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
                             style={[
                               styles.chartBarFill,
-                              {
-                                left: `${leftPct}%`,
-                                width: `${Math.max(widthPct, 8)}%`,
-                              },
+                              { left: `${leftPct}%`, width: `${Math.max(widthPct, 10)}%` },
                             ]}
                           />
                         </View>
-                        <Text style={styles.chartMaxLabel}>{day.max}{suffix}</Text>
+                        <Text style={styles.chartMaxLabel}>{day.max}{'\u00B0'}</Text>
                       </View>
                     );
                   })}
                 </View>
               </View>
 
-              {/* Weather summary */}
               {dailyStats.length > 0 && (
                 <View style={styles.summaryCard}>
-                  <Text style={styles.summaryIcon}>{'\uD83D\uDCCA'}</Text>
+                  <Ionicons name="analytics-outline" size={20} color="rgba(255,255,255,0.5)" />
                   <Text style={styles.summaryText}>{getWeeklySummary()}</Text>
                 </View>
               )}
@@ -167,14 +152,13 @@ export default function ForecastScreen() {
 
           {!loading && !forecast && (
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyIcon}>{'\uD83D\uDCC5'}</Text>
-              <Text style={styles.emptyText}>No forecast data available</Text>
-              <Text style={styles.emptyHint}>Try searching for a city</Text>
+              <Ionicons name="calendar-outline" size={48} color="rgba(255,255,255,0.3)" />
+              <Text style={styles.emptyText}>No forecast data</Text>
+              <Text style={styles.emptyHint}>Search for a city above</Text>
             </View>
           )}
 
-          {/* Bottom padding for tab bar */}
-          <View style={styles.bottomPadding} />
+          <View style={{ height: 90 }} />
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -182,76 +166,72 @@ export default function ForecastScreen() {
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
+  gradient: { flex: 1 },
   safe: {
     flex: 1,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 12,
     paddingBottom: 8,
   },
   headerTitle: {
-    fontSize: SIZES.xxl,
-    fontWeight: '800',
-    color: COLORS.textWhite,
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
     letterSpacing: -0.5,
   },
   headerSubtitle: {
-    fontSize: SIZES.sm,
-    color: COLORS.textLight,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.4)',
     marginTop: 2,
   },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingTop: 16,
-    paddingBottom: 20,
-  },
+  scroll: { flex: 1 },
+  scrollContent: { paddingTop: 8 },
   section: {
     marginHorizontal: 20,
     marginTop: 20,
   },
-  sectionTitle: {
-    fontSize: SIZES.lg,
-    fontWeight: '700',
-    color: COLORS.textWhite,
-    marginBottom: 12,
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.4)',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    marginBottom: 10,
+    marginLeft: 4,
   },
   chartCard: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   chartRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 8,
+    marginVertical: 7,
   },
   chartDay: {
-    width: 40,
-    fontSize: SIZES.sm,
-    fontWeight: '600',
-    color: COLORS.textWhite,
+    width: 36,
+    fontSize: 12,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.7)',
   },
   chartMinLabel: {
-    width: 36,
-    fontSize: SIZES.sm,
+    width: 32,
+    fontSize: 12,
     color: '#93c5fd',
     textAlign: 'right',
     marginRight: 8,
   },
   chartBarTrack: {
     flex: 1,
-    height: 8,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 4,
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 3,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -259,11 +239,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     bottom: 0,
-    borderRadius: 4,
+    borderRadius: 3,
   },
   chartMaxLabel: {
-    width: 36,
-    fontSize: SIZES.sm,
+    width: 32,
+    fontSize: 12,
     color: '#fbbf24',
     textAlign: 'left',
     marginLeft: 8,
@@ -271,44 +251,34 @@ const styles = StyleSheet.create({
   summaryCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 12,
     marginHorizontal: 20,
-    marginTop: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  summaryIcon: {
-    fontSize: 28,
-    marginRight: 12,
+    marginTop: 16,
+    padding: 14,
+    gap: 10,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.06)',
   },
   summaryText: {
     flex: 1,
-    fontSize: SIZES.md,
-    color: COLORS.textLight,
-    lineHeight: 22,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.5)',
+    lineHeight: 20,
   },
   emptyContainer: {
     alignItems: 'center',
     paddingVertical: 60,
-    paddingHorizontal: 40,
-  },
-  emptyIcon: {
-    fontSize: 56,
-    marginBottom: 16,
   },
   emptyText: {
-    fontSize: SIZES.lg,
-    fontWeight: '600',
-    color: COLORS.textWhite,
-    marginBottom: 6,
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.6)',
+    marginTop: 12,
   },
   emptyHint: {
-    fontSize: SIZES.md,
-    color: COLORS.textLight,
-  },
-  bottomPadding: {
-    height: 100,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.3)',
+    marginTop: 4,
   },
 });

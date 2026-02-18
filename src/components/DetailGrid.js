@@ -1,20 +1,20 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated, StyleSheet } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../constants/theme';
 import { formatTime } from '../utils/helpers';
 
 const DETAIL_ITEMS = [
-  { key: 'humidity', emoji: '\uD83D\uDCA7', label: 'Humidity' },
-  { key: 'wind', emoji: '\uD83D\uDCA8', label: 'Wind' },
-  { key: 'pressure', emoji: '\uD83D\uDCCA', label: 'Pressure' },
-  { key: 'visibility', emoji: '\uD83D\uDC41', label: 'Visibility' },
-  { key: 'uv', emoji: '\u2600\uFE0F', label: 'UV Index' },
-  { key: 'sunrise', emoji: '\uD83C\uDF05', label: 'Sunrise' },
+  { key: 'humidity', icon: 'droplet', label: 'Humidity' },
+  { key: 'wind', icon: 'wind', label: 'Wind' },
+  { key: 'pressure', icon: 'activity', label: 'Pressure' },
+  { key: 'visibility', icon: 'eye', label: 'Visibility' },
+  { key: 'uv', icon: 'sun', label: 'UV Index' },
+  { key: 'sunrise', icon: 'sunrise', label: 'Sunrise' },
 ];
 
 function getDetailValue(key, data, units) {
   const windUnit = units === 'metric' ? 'm/s' : 'mph';
-
   switch (key) {
     case 'humidity':
       return `${data.main.humidity}%`;
@@ -33,22 +33,22 @@ function getDetailValue(key, data, units) {
   }
 }
 
-function DetailItem({ emoji, value, label, delay }) {
+function DetailItem({ icon, value, label, delay }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(15)).current;
+  const translateY = useRef(new Animated.Value(12)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 500,
-        delay: delay,
+        duration: 400,
+        delay,
         useNativeDriver: true,
       }),
       Animated.timing(translateY, {
         toValue: 0,
-        duration: 500,
-        delay: delay,
+        duration: 400,
+        delay,
         useNativeDriver: true,
       }),
     ]).start();
@@ -56,15 +56,11 @@ function DetailItem({ emoji, value, label, delay }) {
 
   return (
     <Animated.View
-      style={[
-        styles.detailItem,
-        {
-          opacity: fadeAnim,
-          transform: [{ translateY }],
-        },
-      ]}
+      style={[styles.detailItem, { opacity: fadeAnim, transform: [{ translateY }] }]}
     >
-      <Text style={styles.detailEmoji}>{emoji}</Text>
+      <View style={styles.iconCircle}>
+        <Feather name={icon} size={18} color="rgba(255,255,255,0.8)" />
+      </View>
       <Text style={styles.detailValue}>{value}</Text>
       <Text style={styles.detailLabel}>{label}</Text>
     </Animated.View>
@@ -76,14 +72,15 @@ export default function DetailGrid({ data, units }) {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.sectionLabel}>Details</Text>
       <View style={styles.grid}>
         {DETAIL_ITEMS.map((item, index) => (
           <DetailItem
             key={item.key}
-            emoji={item.emoji}
+            icon={item.icon}
             value={getDetailValue(item.key, data, units)}
             label={item.label}
-            delay={index * 80}
+            delay={index * 60}
           />
         ))}
       </View>
@@ -94,36 +91,50 @@ export default function DetailGrid({ data, units }) {
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 20,
-    marginTop: 16,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 16,
+    marginTop: 24,
+  },
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.5)',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    marginBottom: 12,
+    marginLeft: 4,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 16,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.1)',
+    padding: 8,
   },
   detailItem: {
-    width: '30%',
+    width: '33.33%',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 16,
   },
-  detailEmoji: {
-    fontSize: 26,
-    marginBottom: 8,
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   detailValue: {
-    fontSize: SIZES.md,
-    fontWeight: '700',
-    color: COLORS.textWhite,
-    marginBottom: 4,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 3,
   },
   detailLabel: {
-    fontSize: SIZES.xs,
-    color: COLORS.textLight,
+    fontSize: 10,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.45)',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },

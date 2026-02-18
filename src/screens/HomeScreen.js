@@ -31,9 +31,8 @@ export default function HomeScreen() {
       setUnitsState(savedUnits);
       const cities = await getRecentCities();
       setRecentCities(cities);
-      if (cities.length > 0) {
-        fetchWeather(cities[0], savedUnits);
-      }
+      // Load default city on start
+      fetchWeather(cities.length > 0 ? cities[0] : 'Istanbul', savedUnits);
     })();
   }, []);
 

@@ -90,7 +90,7 @@ export default function SearchBar({ onSearch }) {
 
   const interpolatedBorderColor = borderColorAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.25)'],
+    outputRange: ['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.3)'],
   });
 
   return (
@@ -157,9 +157,10 @@ const styles = StyleSheet.create({
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(0,0,0,0.2)',
     borderRadius: 14,
-    borderWidth: 1,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.12)',
     paddingRight: 6,
   },
   searchIcon: {

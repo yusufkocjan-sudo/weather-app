@@ -278,6 +278,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     borderWidth: 0.5,
     borderColor: 'rgba(255,255,255,0.1)',
+    outlineStyle: 'none',
   },
   saveBtn: {
     height: 40,

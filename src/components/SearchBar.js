@@ -173,6 +173,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#FFFFFF',
     fontWeight: '400',
+    outlineStyle: 'none',
   },
   searchBtn: {
     padding: 2,

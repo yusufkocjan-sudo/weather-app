@@ -7,7 +7,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused } from '@react-navigation/native';
 import { COLORS, SIZES } from '../constants/theme';
-import { getUnits, setUnits as saveUnits } from '../utils/storage';
+import {
+  getUnits, setUnits as saveUnits,
+  getDefaultCity, setDefaultCity as saveDefaultCity,
+  getNotificationSettings, setNotificationSetting,
+} from '../utils/storage';
 
 function SectionCard({ title, iconName, children }) {
   return (
@@ -46,6 +50,11 @@ export default function SettingsScreen() {
       (async () => {
         const savedUnits = await getUnits();
         setUnitsState(savedUnits);
+        const savedCity = await getDefaultCity();
+        setDefaultCity(savedCity);
+        const notifSettings = await getNotificationSettings();
+        setDailyForecast(notifSettings.dailyForecast);
+        setSevereAlerts(notifSettings.severeAlerts);
       })();
     }
   }, [isFocused]);
@@ -56,10 +65,12 @@ export default function SettingsScreen() {
     await saveUnits(newUnits);
   };
 
-  const handleSetDefaultCity = () => {
+  const handleSetDefaultCity = async () => {
     if (cityInput.trim()) {
-      setDefaultCity(cityInput.trim());
+      const city = cityInput.trim();
+      setDefaultCity(city);
       setCityInput('');
+      await saveDefaultCity(city);
     }
   };
 
@@ -124,7 +135,10 @@ export default function SettingsScreen() {
               rightContent={
                 <Switch
                   value={dailyForecast}
-                  onValueChange={setDailyForecast}
+                  onValueChange={(val) => {
+                    setDailyForecast(val);
+                    setNotificationSetting('dailyForecast', val);
+                  }}
                   trackColor={{ false: 'rgba(255,255,255,0.1)', true: 'rgba(59,130,246,0.4)' }}
                   thumbColor={dailyForecast ? '#3b82f6' : '#64748b'}
                 />
@@ -137,7 +151,10 @@ export default function SettingsScreen() {
               rightContent={
                 <Switch
                   value={severeAlerts}
-                  onValueChange={setSevereAlerts}
+                  onValueChange={(val) => {
+                    setSevereAlerts(val);
+                    setNotificationSetting('severeAlerts', val);
+                  }}
                   trackColor={{ false: 'rgba(255,255,255,0.1)', true: 'rgba(239,68,68,0.4)' }}
                   thumbColor={severeAlerts ? '#ef4444' : '#64748b'}
                 />

@@ -1,7 +1,41 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SIZES } from '../constants/theme';
+
+function RecentChip({ city, onSelect }) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.92,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        style={styles.chip}
+        onPress={() => onSelect(city)}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
+      >
+        <Ionicons name="time-outline" size={12} color="rgba(255,255,255,0.4)" />
+        <Text style={styles.chipText}>{city}</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
 
 export default function RecentCities({ cities, onSelect }) {
   if (!cities || cities.length === 0) return null;
@@ -11,15 +45,7 @@ export default function RecentCities({ cities, onSelect }) {
       <Text style={styles.sectionLabel}>Recent</Text>
       <View style={styles.chips}>
         {cities.map((city) => (
-          <TouchableOpacity
-            key={city}
-            style={styles.chip}
-            onPress={() => onSelect(city)}
-            activeOpacity={0.6}
-          >
-            <Ionicons name="time-outline" size={12} color="rgba(255,255,255,0.4)" />
-            <Text style={styles.chipText}>{city}</Text>
-          </TouchableOpacity>
+          <RecentChip key={city} city={city} onSelect={onSelect} />
         ))}
       </View>
     </View>

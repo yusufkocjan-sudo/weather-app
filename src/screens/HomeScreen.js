@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  View, Text, ScrollView, RefreshControl,
-  StyleSheet, SafeAreaView, StatusBar, Platform,
+  View, Text, RefreshControl,
+  StyleSheet, SafeAreaView, StatusBar, Platform, Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useRoute } from '@react-navigation/native';
 import { COLORS, SIZES, getGradient } from '../constants/theme';
+import { getCityImage } from '../constants/cityImages';
 import { getCurrentWeather, getForecast } from '../services/weatherApi';
-import { getRecentCities, addRecentCity, getUnits, setUnits as saveUnits } from '../utils/storage';
+import { getRecentCities, addRecentCity, getUnits, setUnits as saveUnits, getDefaultCity } from '../utils/storage';
 
 import SearchBar from '../components/SearchBar';
 import CurrentWeather from '../components/CurrentWeather';
@@ -28,6 +30,10 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [gradient, setGradient] = useState(['#1e40af', '#3b82f6']);
+  const [cityImage, setCityImage] = useState(null);
+
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const route = useRoute();
 
   useEffect(() => {
     (async () => {
@@ -35,9 +41,17 @@ export default function HomeScreen() {
       setUnitsState(savedUnits);
       const cities = await getRecentCities();
       setRecentCities(cities);
-      fetchWeather(cities.length > 0 ? cities[0] : 'Istanbul', savedUnits);
+      const defaultCity = await getDefaultCity();
+      fetchWeather(cities.length > 0 ? cities[0] : defaultCity, savedUnits);
     })();
   }, []);
+
+  // Listen for city param from Explore tab navigation
+  useEffect(() => {
+    if (route.params?.city) {
+      fetchWeather(route.params.city);
+    }
+  }, [route.params?.city, route.params?.timestamp]);
 
   const fetchWeather = async (city, unitOverride) => {
     const u = unitOverride || units;
@@ -51,6 +65,7 @@ export default function HomeScreen() {
       setWeather(weatherData);
       setForecast(forecastData);
       setGradient(getGradient(weatherData.weather[0].main));
+      setCityImage(getCityImage(city));
       const updated = await addRecentCity(city);
       setRecentCities(updated);
     } catch (err) {
@@ -79,8 +94,33 @@ export default function HomeScreen() {
 
   const weatherMain = weather?.weather?.[0]?.main || '';
 
+  const heroOpacity = scrollY.interpolate({
+    inputRange: [0, 200],
+    outputRange: [0.35, 0.08],
+    extrapolate: 'clamp',
+  });
+
+  const heroTranslate = scrollY.interpolate({
+    inputRange: [-100, 0, 200],
+    outputRange: [50, 0, -40],
+    extrapolate: 'clamp',
+  });
+
   return (
     <LinearGradient colors={gradient} style={styles.gradient}>
+      {cityImage && (
+        <Animated.Image
+          source={{ uri: cityImage }}
+          style={[
+            styles.heroImage,
+            {
+              opacity: heroOpacity,
+              transform: [{ translateY: heroTranslate }],
+            },
+          ]}
+          resizeMode="cover"
+        />
+      )}
       <WeatherParticles weatherMain={weatherMain} />
       <SafeAreaView style={styles.safe}>
         <StatusBar barStyle="light-content" />
@@ -90,10 +130,15 @@ export default function HomeScreen() {
           <UnitToggle units={units} onToggle={handleUnitToggle} />
         </View>
 
-        <ScrollView
+        <Animated.ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true }
+          )}
+          scrollEventThrottle={16}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />
           }
@@ -131,7 +176,7 @@ export default function HomeScreen() {
           )}
 
           <View style={{ height: 90 }} />
-        </ScrollView>
+        </Animated.ScrollView>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -139,6 +184,14 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
+  heroImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 350,
+    width: '100%',
+  },
   safe: {
     flex: 1,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,

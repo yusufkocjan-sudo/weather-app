@@ -53,6 +53,36 @@ const MOCK_CITIES = {
       { dt: Date.now() / 1000 + 432000, dt_txt: getFutureDate(5), main: { temp: 13, temp_max: 15, temp_min: 9 }, weather: [{ icon: '01d' }] },
     ],
   },
+  dubai: {
+    current: { name: 'Dubai', sys: { country: 'AE', sunrise: 1708048800, sunset: 1708090000 }, main: { temp: 32, feels_like: 34, humidity: 45, pressure: 1010, temp_min: 28, temp_max: 36 }, wind: { speed: 4.2, deg: 140 }, visibility: 12000, weather: [{ main: 'Clear', description: 'clear sky', icon: '01d' }] },
+    forecast: [
+      { dt: Date.now() / 1000 + 86400, dt_txt: getFutureDate(1), main: { temp: 33, temp_max: 37, temp_min: 29 }, weather: [{ icon: '01d' }] },
+      { dt: Date.now() / 1000 + 172800, dt_txt: getFutureDate(2), main: { temp: 34, temp_max: 38, temp_min: 30 }, weather: [{ icon: '01d' }] },
+      { dt: Date.now() / 1000 + 259200, dt_txt: getFutureDate(3), main: { temp: 31, temp_max: 35, temp_min: 27 }, weather: [{ icon: '02d' }] },
+      { dt: Date.now() / 1000 + 345600, dt_txt: getFutureDate(4), main: { temp: 30, temp_max: 34, temp_min: 26 }, weather: [{ icon: '03d' }] },
+      { dt: Date.now() / 1000 + 432000, dt_txt: getFutureDate(5), main: { temp: 35, temp_max: 39, temp_min: 31 }, weather: [{ icon: '01d' }] },
+    ],
+  },
+  sydney: {
+    current: { name: 'Sydney', sys: { country: 'AU', sunrise: 1708030800, sunset: 1708078200 }, main: { temp: 24, feels_like: 25, humidity: 55, pressure: 1016, temp_min: 20, temp_max: 28 }, wind: { speed: 5.5, deg: 200 }, visibility: 14000, weather: [{ main: 'Clear', description: 'clear sky', icon: '01d' }] },
+    forecast: [
+      { dt: Date.now() / 1000 + 86400, dt_txt: getFutureDate(1), main: { temp: 25, temp_max: 29, temp_min: 21 }, weather: [{ icon: '02d' }] },
+      { dt: Date.now() / 1000 + 172800, dt_txt: getFutureDate(2), main: { temp: 22, temp_max: 26, temp_min: 18 }, weather: [{ icon: '10d' }] },
+      { dt: Date.now() / 1000 + 259200, dt_txt: getFutureDate(3), main: { temp: 26, temp_max: 30, temp_min: 22 }, weather: [{ icon: '01d' }] },
+      { dt: Date.now() / 1000 + 345600, dt_txt: getFutureDate(4), main: { temp: 23, temp_max: 27, temp_min: 19 }, weather: [{ icon: '03d' }] },
+      { dt: Date.now() / 1000 + 432000, dt_txt: getFutureDate(5), main: { temp: 27, temp_max: 31, temp_min: 23 }, weather: [{ icon: '01d' }] },
+    ],
+  },
+  berlin: {
+    current: { name: 'Berlin', sys: { country: 'DE', sunrise: 1708068600, sunset: 1708102200 }, main: { temp: 7, feels_like: 3, humidity: 80, pressure: 1008, temp_min: 3, temp_max: 9 }, wind: { speed: 6.8, deg: 270 }, visibility: 6000, weather: [{ main: 'Clouds', description: 'overcast clouds', icon: '04d' }] },
+    forecast: [
+      { dt: Date.now() / 1000 + 86400, dt_txt: getFutureDate(1), main: { temp: 5, temp_max: 7, temp_min: 2 }, weather: [{ icon: '04d' }] },
+      { dt: Date.now() / 1000 + 172800, dt_txt: getFutureDate(2), main: { temp: 8, temp_max: 10, temp_min: 4 }, weather: [{ icon: '03d' }] },
+      { dt: Date.now() / 1000 + 259200, dt_txt: getFutureDate(3), main: { temp: 4, temp_max: 6, temp_min: 1 }, weather: [{ icon: '13d' }] },
+      { dt: Date.now() / 1000 + 345600, dt_txt: getFutureDate(4), main: { temp: 6, temp_max: 8, temp_min: 3 }, weather: [{ icon: '10d' }] },
+      { dt: Date.now() / 1000 + 432000, dt_txt: getFutureDate(5), main: { temp: 9, temp_max: 11, temp_min: 5 }, weather: [{ icon: '02d' }] },
+    ],
+  },
 };
 
 function getFutureDate(daysAhead) {

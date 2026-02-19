@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet,
+  View, Text, ScrollView, StyleSheet, Image,
   SafeAreaView, StatusBar, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,6 +9,7 @@ import { useIsFocused } from '@react-navigation/native';
 import { COLORS, SIZES } from '../constants/theme';
 import { getForecast } from '../services/weatherApi';
 import { getUnits } from '../utils/storage';
+import { getCityImage } from '../constants/cityImages';
 
 import SearchBar from '../components/SearchBar';
 import DailyForecast from '../components/DailyForecast';
@@ -19,6 +20,7 @@ export default function ForecastScreen() {
   const [city, setCity] = useState('Istanbul');
   const [units, setUnits] = useState('metric');
   const [loading, setLoading] = useState(true);
+  const [cityImage, setCityImage] = useState(null);
   const isFocused = useIsFocused();
 
   useEffect(() => {
@@ -39,6 +41,7 @@ export default function ForecastScreen() {
     try {
       const data = await getForecast(c, u);
       setForecast(data);
+      setCityImage(getCityImage(c));
     } catch {
       setForecast(null);
     } finally {
@@ -105,6 +108,17 @@ export default function ForecastScreen() {
           showsVerticalScrollIndicator={false}
         >
           <SearchBar onSearch={handleSearch} />
+
+          {cityImage && !loading && (
+            <View style={styles.cityHero}>
+              <Image source={{ uri: cityImage }} style={styles.cityHeroImage} />
+              <LinearGradient
+                colors={['transparent', 'rgba(15,23,42,0.95)']}
+                style={styles.cityHeroOverlay}
+              />
+              <Text style={styles.cityHeroName}>{city}</Text>
+            </View>
+          )}
 
           {loading && <WeatherSkeleton />}
 
@@ -189,6 +203,30 @@ const styles = StyleSheet.create({
   },
   scroll: { flex: 1 },
   scrollContent: { paddingTop: 8 },
+  cityHero: {
+    marginHorizontal: 20,
+    height: 120,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 8,
+    position: 'relative',
+  },
+  cityHeroImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  cityHeroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  cityHeroName: {
+    position: 'absolute',
+    bottom: 12,
+    left: 16,
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
   section: {
     marginHorizontal: 20,
     marginTop: 20,

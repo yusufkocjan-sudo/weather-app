@@ -31,7 +31,7 @@ export default function TabNavigator() {
         tabBarHideOnKeyboard: true,
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Home" component={HomeScreen} initialParams={{ city: null }} />
       <Tab.Screen name="Forecast" component={ForecastScreen} />
       <Tab.Screen name="Explore" component={ExploreScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />

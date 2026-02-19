@@ -1,10 +1,15 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../constants/theme';
 import { formatTemp, getWeatherIcon, formatDate, capitalizeFirst } from '../utils/helpers';
 
 function DailyRow({ item, minOverall, maxOverall, units }) {
+  const [expanded, setExpanded] = useState(false);
+  const expandAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
   const unitSymbol = units === 'metric' ? '\u00B0' : '\u00B0';
   const icon = getWeatherIcon(item.weather[0].icon);
   const description = capitalizeFirst(item.weather[0].description);
@@ -16,39 +21,107 @@ function DailyRow({ item, minOverall, maxOverall, units }) {
   const barLeft = ((minTemp - minOverall) / range) * 100;
   const barWidth = Math.max(((maxTemp - minTemp) / range) * 100, 8);
 
+  const toggleExpand = () => {
+    const toValue = expanded ? 0 : 1;
+    setExpanded(!expanded);
+    Animated.spring(expandAnim, {
+      toValue,
+      friction: 8,
+      tension: 100,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.97,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const expandHeight = expandAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 40],
+  });
+
+  const expandOpacity = expandAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0, 0, 1],
+  });
+
+  const chevronRotate = expandAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
+
   return (
-    <View style={styles.row}>
-      <Text style={styles.dayName}>{dayName}</Text>
-      <Text style={styles.dayIcon}>{icon}</Text>
-      <View style={styles.descriptionWrap}>
-        <Text style={styles.dayDescription} numberOfLines={1}>{description}</Text>
-      </View>
-      <Text style={styles.tempMin}>{minTemp}{unitSymbol}</Text>
-      <View style={styles.barContainer}>
-        <View style={[styles.barBackground]}>
-          <LinearGradient
-            colors={['#5B9BD5', '#F4A261']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[
-              styles.barFill,
-              {
-                left: `${barLeft}%`,
-                width: `${barWidth}%`,
-              },
-            ]}
-          />
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={toggleExpand}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+      >
+        <View style={styles.row}>
+          <Text style={styles.dayName}>{dayName}</Text>
+          <Text style={styles.dayIcon}>{icon}</Text>
+          <View style={styles.descriptionWrap}>
+            <Text style={styles.dayDescription} numberOfLines={1}>{description}</Text>
+          </View>
+          <Text style={styles.tempMin}>{minTemp}{unitSymbol}</Text>
+          <View style={styles.barContainer}>
+            <View style={styles.barBackground}>
+              <LinearGradient
+                colors={['#5B9BD5', '#F4A261']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[
+                  styles.barFill,
+                  {
+                    left: `${barLeft}%`,
+                    width: `${barWidth}%`,
+                  },
+                ]}
+              />
+            </View>
+          </View>
+          <Text style={styles.tempMax}>{maxTemp}{unitSymbol}</Text>
+          <Animated.View style={{ transform: [{ rotate: chevronRotate }], marginLeft: 4 }}>
+            <Ionicons name="chevron-down" size={14} color="rgba(255,255,255,0.3)" />
+          </Animated.View>
         </View>
-      </View>
-      <Text style={styles.tempMax}>{maxTemp}{unitSymbol}</Text>
-    </View>
+        <Animated.View style={{
+          height: expandHeight,
+          opacity: expandOpacity,
+          overflow: 'hidden',
+        }}>
+          <View style={styles.expandedContent}>
+            <Text style={styles.expandedText}>{description}</Text>
+            <Text style={styles.expandedText}>
+              H: {item.main?.humidity || '--'}%
+            </Text>
+            <Text style={styles.expandedText}>
+              W: {item.wind?.speed || item.main?.wind_speed || '--'} {units === 'metric' ? 'm/s' : 'mph'}
+            </Text>
+          </View>
+        </Animated.View>
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 
 function processForecastData(data) {
   if (!data) return [];
 
-  // Handle both array format (from our API helper) and object with .list (raw API)
   const items = Array.isArray(data) ? data : data.list;
   if (!items || items.length === 0) return [];
 
@@ -66,6 +139,8 @@ function processForecastData(data) {
         temp_min: tempMin,
         temp_max: tempMax,
         weather: item.weather,
+        main: item.main,
+        wind: item.wind,
       };
     } else {
       dailyMap[date].temp_min = Math.min(dailyMap[date].temp_min, tempMin);
@@ -175,5 +250,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.textWhite,
     textAlign: 'right',
+  },
+  expandedContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  expandedText: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.5)',
+    fontWeight: '400',
   },
 });

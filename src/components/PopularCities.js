@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../constants/theme';
 
 const CITIES = [
@@ -17,6 +16,7 @@ const CITIES = [
 function CityCard({ city, index, onSelect, units }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(20)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -35,18 +35,39 @@ function CityCard({ city, index, onSelect, units }) {
     ]).start();
   }, []);
 
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+
   const tempDisplay = units === 'imperial'
     ? Math.round((city.mockTemp * 9) / 5 + 32)
     : city.mockTemp;
 
   return (
     <Animated.View
-      style={[styles.cardWrapper, { opacity: fadeAnim, transform: [{ translateY }] }]}
+      style={[styles.cardWrapper, {
+        opacity: fadeAnim,
+        transform: [{ translateY }, { scale: scaleAnim }],
+      }]}
     >
       <TouchableOpacity
         style={styles.card}
         onPress={() => onSelect && onSelect(city.name)}
-        activeOpacity={0.7}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
       >
         <View style={styles.cardTop}>
           <View>

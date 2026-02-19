@@ -1,24 +1,19 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Animated, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Animated, ActivityIndicator, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
-const CITY_SUGGESTIONS = [
-  'London', 'New York', 'Tokyo', 'Paris', 'Istanbul', 'Dubai', 'Sydney', 'Berlin',
-  'Amsterdam', 'Ankara', 'Athens', 'Bangkok', 'Barcelona', 'Beijing', 'Brussels',
-  'Buenos Aires', 'Cairo', 'Chicago', 'Copenhagen', 'Delhi', 'Dublin', 'Frankfurt',
-  'Helsinki', 'Hong Kong', 'Johannesburg', 'Kuala Lumpur', 'Lisbon', 'Los Angeles',
-  'Madrid', 'Mexico City', 'Miami', 'Milan', 'Moscow', 'Mumbai', 'Munich',
-  'Nairobi', 'Oslo', 'Prague', 'Rio de Janeiro', 'Rome', 'San Francisco',
-  'Seoul', 'Shanghai', 'Singapore', 'Stockholm', 'Toronto', 'Vienna', 'Warsaw', 'Zurich',
-];
+const API_KEY = 'a16e38d85ac47d67090fc0604783a32d';
+const GEO_URL = 'https://api.openweathermap.org/geo/1.0/direct';
 
 export default function SearchBar({ onSearch }) {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const borderColorAnim = useRef(new Animated.Value(0)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const debounceRef = useRef(null);
 
   const handleFocus = () => {
     setIsFocused(true);
@@ -41,22 +36,53 @@ export default function SearchBar({ onSearch }) {
     }).start();
   };
 
+  const fetchSuggestions = async (text) => {
+    if (text.trim().length < 2) {
+      setSuggestions([]);
+      setIsLoading(false);
+      return;
+    }
+    try {
+      setIsLoading(true);
+      const res = await fetch(`${GEO_URL}?q=${encodeURIComponent(text.trim())}&limit=5&appid=${API_KEY}`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        const unique = [];
+        const seen = new Set();
+        data.forEach((item) => {
+          const key = `${item.name}-${item.country}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            unique.push({
+              name: item.name,
+              country: item.country,
+              state: item.state || '',
+            });
+          }
+        });
+        setSuggestions(unique);
+      }
+    } catch {
+      setSuggestions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleChangeText = (text) => {
     setQuery(text);
-    if (text.trim().length > 0) {
-      const filtered = CITY_SUGGESTIONS.filter((city) =>
-        city.toLowerCase().startsWith(text.toLowerCase().trim())
-      ).slice(0, 5);
-      setSuggestions(filtered);
-    } else {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (text.trim().length < 2) {
       setSuggestions([]);
+      return;
     }
+    debounceRef.current = setTimeout(() => fetchSuggestions(text), 300);
   };
 
   const handleSelectSuggestion = (city) => {
     setQuery('');
     setSuggestions([]);
-    onSearch(city);
+    onSearch(city.name);
   };
 
   const triggerShake = () => {
@@ -130,19 +156,31 @@ export default function SearchBar({ onSearch }) {
         </TouchableOpacity>
       </Animated.View>
 
-      {suggestions.length > 0 && isFocused && (
+      {isFocused && (isLoading || suggestions.length > 0) && (
         <View style={styles.suggestionsWrap}>
-          {suggestions.map((city) => (
-            <TouchableOpacity
-              key={city}
-              style={styles.suggestionItem}
-              onPress={() => handleSelectSuggestion(city)}
-              activeOpacity={0.6}
-            >
-              <Feather name="map-pin" size={13} color="rgba(255,255,255,0.35)" />
-              <Text style={styles.suggestionText}>{city}</Text>
-            </TouchableOpacity>
-          ))}
+          {isLoading && suggestions.length === 0 ? (
+            <View style={styles.loadingRow}>
+              <ActivityIndicator size="small" color="rgba(255,255,255,0.4)" />
+              <Text style={styles.loadingText}>Searching...</Text>
+            </View>
+          ) : (
+            suggestions.map((city, index) => (
+              <TouchableOpacity
+                key={`${city.name}-${city.country}-${index}`}
+                style={styles.suggestionItem}
+                onPress={() => handleSelectSuggestion(city)}
+                activeOpacity={0.6}
+              >
+                <Feather name="map-pin" size={13} color="rgba(255,255,255,0.35)" />
+                <View style={styles.suggestionTextWrap}>
+                  <Text style={styles.suggestionText}>{city.name}</Text>
+                  <Text style={styles.suggestionMeta}>
+                    {city.state ? `${city.state}, ` : ''}{city.country}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
       )}
     </View>
@@ -203,9 +241,28 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: 'rgba(255,255,255,0.06)',
   },
+  suggestionTextWrap: {
+    flex: 1,
+  },
   suggestionText: {
     fontSize: 14,
     color: 'rgba(255,255,255,0.75)',
     fontWeight: '400',
+  },
+  suggestionMeta: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.3)',
+    marginTop: 1,
+  },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    gap: 8,
+  },
+  loadingText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.35)',
   },
 });

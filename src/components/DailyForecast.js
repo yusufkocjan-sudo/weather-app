@@ -3,23 +3,25 @@ import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../constants/theme';
-import { formatTemp, getWeatherIcon, formatDate, capitalizeFirst } from '../utils/helpers';
+import { formatTemp, convertTemp, convertSpeed, getWeatherIcon, formatDate, capitalizeFirst } from '../utils/helpers';
 
 function DailyRow({ item, minOverall, maxOverall, units }) {
   const [expanded, setExpanded] = useState(false);
   const expandAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  const unitSymbol = units === 'metric' ? '\u00B0' : '\u00B0';
   const icon = getWeatherIcon(item.weather[0].icon);
   const description = capitalizeFirst(item.weather[0].description);
   const dayName = formatDate(item.dt);
-  const minTemp = formatTemp(item.temp_min !== undefined ? item.temp_min : item.main.temp_min);
-  const maxTemp = formatTemp(item.temp_max !== undefined ? item.temp_max : item.main.temp_max);
+  const rawMin = formatTemp(item.temp_min !== undefined ? item.temp_min : item.main.temp_min);
+  const rawMax = formatTemp(item.temp_max !== undefined ? item.temp_max : item.main.temp_max);
+  const minTemp = convertTemp(rawMin, units);
+  const maxTemp = convertTemp(rawMax, units);
 
+  // Bar graph uses raw metric values for consistent positioning
   const range = maxOverall - minOverall || 1;
-  const barLeft = ((minTemp - minOverall) / range) * 100;
-  const barWidth = Math.max(((maxTemp - minTemp) / range) * 100, 8);
+  const barLeft = ((rawMin - minOverall) / range) * 100;
+  const barWidth = Math.max(((rawMax - rawMin) / range) * 100, 8);
 
   const toggleExpand = () => {
     const toValue = expanded ? 0 : 1;
@@ -77,7 +79,7 @@ function DailyRow({ item, minOverall, maxOverall, units }) {
           <View style={styles.descriptionWrap}>
             <Text style={styles.dayDescription} numberOfLines={1}>{description}</Text>
           </View>
-          <Text style={styles.tempMin}>{minTemp}{unitSymbol}</Text>
+          <Text style={styles.tempMin}>{minTemp}{'\u00B0'}</Text>
           <View style={styles.barContainer}>
             <View style={styles.barBackground}>
               <LinearGradient
@@ -94,7 +96,7 @@ function DailyRow({ item, minOverall, maxOverall, units }) {
               />
             </View>
           </View>
-          <Text style={styles.tempMax}>{maxTemp}{unitSymbol}</Text>
+          <Text style={styles.tempMax}>{maxTemp}{'\u00B0'}</Text>
           <Animated.View style={{ transform: [{ rotate: chevronRotate }], marginLeft: 4 }}>
             <Ionicons name="chevron-down" size={14} color="rgba(255,255,255,0.3)" />
           </Animated.View>
@@ -110,7 +112,7 @@ function DailyRow({ item, minOverall, maxOverall, units }) {
               H: {item.main?.humidity || '--'}%
             </Text>
             <Text style={styles.expandedText}>
-              W: {item.wind?.speed || item.main?.wind_speed || '--'} {units === 'metric' ? 'm/s' : 'mph'}
+              W: {convertSpeed(item.wind?.speed || item.main?.wind_speed || 0, units)} {units === 'metric' ? 'm/s' : 'mph'}
             </Text>
           </View>
         </Animated.View>

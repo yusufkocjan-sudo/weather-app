@@ -2,8 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../constants/theme';
-import { formatTemp, getWeatherIcon, capitalizeFirst } from '../utils/helpers';
+import { convertTemp, getWeatherIcon, capitalizeFirst } from '../utils/helpers';
 import AnimatedNumber from './AnimatedNumber';
+
+// Data is always fetched in metric (Celsius). Conversion to imperial happens client-side.
 
 export default function CurrentWeather({ data, units }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -33,8 +35,8 @@ export default function CurrentWeather({ data, units }) {
 
   const icon = getWeatherIcon(data.weather[0].icon);
   const description = capitalizeFirst(data.weather[0].description);
-  const unitSymbol = units === 'metric' ? '\u00B0' : '\u00B0';
-  const feelsLikeTemp = formatTemp(data.main.feels_like);
+  const unitSymbol = '\u00B0';
+  const feelsLikeTemp = convertTemp(data.main.feels_like, units);
 
   return (
     <Animated.View
@@ -51,7 +53,7 @@ export default function CurrentWeather({ data, units }) {
 
       <View style={styles.tempRow}>
         <AnimatedNumber
-          value={data.main.temp}
+          value={convertTemp(data.main.temp, units)}
           suffix={unitSymbol}
           style={styles.temp}
         />
@@ -66,12 +68,12 @@ export default function CurrentWeather({ data, units }) {
       <View style={styles.minMaxRow}>
         <Feather name="arrow-down" size={14} color="rgba(255,255,255,0.5)" />
         <Text style={styles.minMaxText}>
-          {formatTemp(data.main.temp_min)}{unitSymbol}
+          {convertTemp(data.main.temp_min, units)}{unitSymbol}
         </Text>
         <View style={styles.minMaxDot} />
         <Feather name="arrow-up" size={14} color="rgba(255,255,255,0.5)" />
         <Text style={styles.minMaxText}>
-          {formatTemp(data.main.temp_max)}{unitSymbol}
+          {convertTemp(data.main.temp_max, units)}{unitSymbol}
         </Text>
       </View>
     </Animated.View>

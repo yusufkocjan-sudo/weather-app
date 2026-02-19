@@ -9,6 +9,7 @@ import { useIsFocused } from '@react-navigation/native';
 import { COLORS, SIZES } from '../constants/theme';
 import { getForecast } from '../services/weatherApi';
 import { getUnits } from '../utils/storage';
+import { convertTemp } from '../utils/helpers';
 import { getCityImage } from '../constants/cityImages';
 
 import SearchBar from '../components/SearchBar';
@@ -33,13 +34,13 @@ export default function ForecastScreen() {
   }, [isFocused]);
 
   useEffect(() => {
-    fetchForecast(city, units);
-  }, [city, units]);
+    fetchForecast(city);
+  }, [city]);
 
-  const fetchForecast = async (c, u) => {
+  const fetchForecast = async (c) => {
     setLoading(true);
     try {
-      const data = await getForecast(c, u);
+      const data = await getForecast(c, 'metric');
       setForecast(data);
       setCityImage(getCityImage(c));
     } catch {
@@ -89,7 +90,7 @@ export default function ForecastScreen() {
     conditions.forEach((c) => { counts[c] = (counts[c] || 0) + 1; });
     const dominant = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
     const suffix = units === 'metric' ? '\u00B0C' : '\u00B0F';
-    return `Mostly ${dominant.toLowerCase()} this week, ${globalMin}${suffix} to ${globalMax}${suffix}.`;
+    return `Mostly ${dominant.toLowerCase()} this week, ${convertTemp(globalMin, units)}${suffix} to ${convertTemp(globalMax, units)}${suffix}.`;
   };
 
   return (
@@ -136,7 +137,7 @@ export default function ForecastScreen() {
                     return (
                       <View key={index} style={styles.chartRow}>
                         <Text style={styles.chartDay}>{day.dayName}</Text>
-                        <Text style={styles.chartMinLabel}>{day.min}{'\u00B0'}</Text>
+                        <Text style={styles.chartMinLabel}>{convertTemp(day.min, units)}{'\u00B0'}</Text>
                         <View style={styles.chartBarTrack}>
                           <LinearGradient
                             colors={['#60a5fa', '#fbbf24']}
@@ -148,7 +149,7 @@ export default function ForecastScreen() {
                             ]}
                           />
                         </View>
-                        <Text style={styles.chartMaxLabel}>{day.max}{'\u00B0'}</Text>
+                        <Text style={styles.chartMaxLabel}>{convertTemp(day.max, units)}{'\u00B0'}</Text>
                       </View>
                     );
                   })}

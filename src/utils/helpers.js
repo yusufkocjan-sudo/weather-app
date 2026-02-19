@@ -4,6 +4,16 @@ export function formatTemp(temp) {
   return Math.round(temp);
 }
 
+export function convertTemp(celsius, units) {
+  if (units === 'imperial') return Math.round((celsius * 9) / 5 + 32);
+  return Math.round(celsius);
+}
+
+export function convertSpeed(ms, units) {
+  if (units === 'imperial') return (ms * 2.237).toFixed(1);
+  return ms;
+}
+
 export function getWeatherIcon(iconCode) {
   return WEATHER_ICONS[iconCode] || '🌡️';
 }

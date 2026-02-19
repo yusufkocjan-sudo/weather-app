@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { COLORS, SIZES } from '../constants/theme';
-import { formatTemp, getWeatherIcon } from '../utils/helpers';
+import { convertTemp, getWeatherIcon } from '../utils/helpers';
 
 function generateMockHourlyData(currentWeather) {
   if (!currentWeather) return [];
@@ -28,8 +28,6 @@ function generateMockHourlyData(currentWeather) {
 }
 
 function HourlyItem({ item, units }) {
-  const unitSymbol = units === 'metric' ? '\u00B0' : '\u00B0';
-
   return (
     <View style={[styles.hourCard, item.isNow && styles.hourCardActive]}>
       <Text style={[styles.hourTime, item.isNow && styles.hourTimeActive]}>
@@ -37,7 +35,7 @@ function HourlyItem({ item, units }) {
       </Text>
       <Text style={styles.hourIcon}>{getWeatherIcon(item.icon)}</Text>
       <Text style={styles.hourTemp}>
-        {formatTemp(item.temp)}{unitSymbol}
+        {convertTemp(item.temp, units)}{'\u00B0'}
       </Text>
     </View>
   );

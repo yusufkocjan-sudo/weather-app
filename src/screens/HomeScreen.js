@@ -42,7 +42,7 @@ export default function HomeScreen() {
       const cities = await getRecentCities();
       setRecentCities(cities);
       const defaultCity = await getDefaultCity();
-      fetchWeather(cities.length > 0 ? cities[0] : defaultCity, savedUnits);
+      fetchWeather(cities.length > 0 ? cities[0] : defaultCity);
     })();
   }, []);
 
@@ -53,14 +53,13 @@ export default function HomeScreen() {
     }
   }, [route.params?.city, route.params?.timestamp]);
 
-  const fetchWeather = async (city, unitOverride) => {
-    const u = unitOverride || units;
+  const fetchWeather = async (city) => {
     setLoading(true);
     setError(null);
     try {
       const [weatherData, forecastData] = await Promise.all([
-        getCurrentWeather(city, u),
-        getForecast(city, u),
+        getCurrentWeather(city, 'metric'),
+        getForecast(city, 'metric'),
       ]);
       setWeather(weatherData);
       setForecast(forecastData);
@@ -89,7 +88,6 @@ export default function HomeScreen() {
   const handleUnitToggle = async (newUnits) => {
     setUnitsState(newUnits);
     await saveUnits(newUnits);
-    if (weather) fetchWeather(weather.name, newUnits);
   };
 
   const weatherMain = weather?.weather?.[0]?.main || '';

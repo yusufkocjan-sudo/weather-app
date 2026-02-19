@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../constants/theme';
-import { formatTime } from '../utils/helpers';
+import { formatTime, convertSpeed } from '../utils/helpers';
 
 const DETAIL_ITEMS = [
   { key: 'humidity', icon: 'droplet', label: 'Humidity' },
@@ -19,7 +19,7 @@ function getDetailValue(key, data, units) {
     case 'humidity':
       return `${data.main.humidity}%`;
     case 'wind':
-      return `${data.wind.speed} ${windUnit}`;
+      return `${convertSpeed(data.wind.speed, units)} ${windUnit}`;
     case 'pressure':
       return `${data.main.pressure} hPa`;
     case 'visibility':

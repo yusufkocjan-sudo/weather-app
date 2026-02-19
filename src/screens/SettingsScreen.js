@@ -1,39 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TextInput,
-  TouchableOpacity, SafeAreaView, StatusBar, Platform, Switch,
+  TouchableOpacity, SafeAreaView, StatusBar, Platform, Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { useIsFocused } from '@react-navigation/native';
-import { COLORS, SIZES } from '../constants/theme';
 import {
   getUnits, setUnits as saveUnits,
   getDefaultCity, setDefaultCity as saveDefaultCity,
   getNotificationSettings, setNotificationSetting,
 } from '../utils/storage';
 
-function SectionCard({ title, iconName, children }) {
-  return (
-    <View style={styles.sectionCard}>
-      <View style={styles.sectionHeader}>
-        <Ionicons name={iconName} size={18} color="rgba(255,255,255,0.6)" />
-        <Text style={styles.sectionTitle}>{title}</Text>
-      </View>
-      {children}
-    </View>
-  );
-}
+function ToggleSwitch({ value, onToggle, activeColor = '#3b82f6' }) {
+  const translateX = useRef(new Animated.Value(value ? 20 : 0)).current;
 
-function SettingsRow({ label, subtitle, rightContent }) {
+  useEffect(() => {
+    Animated.spring(translateX, {
+      toValue: value ? 20 : 0,
+      friction: 8,
+      tension: 120,
+      useNativeDriver: true,
+    }).start();
+  }, [value]);
+
   return (
-    <View style={styles.settingsRow}>
-      <View style={styles.settingsRowLeft}>
-        <Text style={styles.settingsLabel}>{label}</Text>
-        {subtitle && <Text style={styles.settingsSubtitle}>{subtitle}</Text>}
-      </View>
-      {rightContent}
-    </View>
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={onToggle}
+      style={[
+        styles.toggleTrack,
+        { backgroundColor: value ? activeColor : 'rgba(255,255,255,0.1)' },
+      ]}
+    >
+      <Animated.View
+        style={[
+          styles.toggleThumb,
+          { transform: [{ translateX }] },
+        ]}
+      />
+    </TouchableOpacity>
   );
 }
 
@@ -59,10 +65,9 @@ export default function SettingsScreen() {
     }
   }, [isFocused]);
 
-  const handleUnitToggle = async () => {
-    const newUnits = units === 'metric' ? 'imperial' : 'metric';
-    setUnitsState(newUnits);
-    await saveUnits(newUnits);
+  const handleSetUnit = async (u) => {
+    setUnitsState(u);
+    await saveUnits(u);
   };
 
   const handleSetDefaultCity = async () => {
@@ -88,88 +93,135 @@ export default function SettingsScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <SectionCard title="Units" iconName="thermometer-outline">
-            <SettingsRow
-              label="Temperature"
-              subtitle={units === 'metric' ? 'Celsius' : 'Fahrenheit'}
-              rightContent={
-                <TouchableOpacity
-                  onPress={handleUnitToggle}
-                  style={[styles.unitBtn, units === 'imperial' && styles.unitBtnActive]}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.unitBtnText}>
-                    {units === 'metric' ? '\u00B0C' : '\u00B0F'}
-                  </Text>
-                </TouchableOpacity>
-              }
-            />
-          </SectionCard>
-
-          <SectionCard title="Default City" iconName="location-outline">
-            <SettingsRow label="Current" subtitle={defaultCity} />
-            <View style={styles.cityInputRow}>
-              <TextInput
-                style={styles.cityInput}
-                placeholder="Enter city name..."
-                placeholderTextColor="rgba(255,255,255,0.25)"
-                value={cityInput}
-                onChangeText={setCityInput}
-                onSubmitEditing={handleSetDefaultCity}
-                returnKeyType="done"
-              />
+          {/* Unit Selector — pill toggle */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Temperature Unit</Text>
+            <View style={styles.unitPillRow}>
               <TouchableOpacity
-                style={[styles.saveBtn, !cityInput.trim() && styles.saveBtnDisabled]}
-                onPress={handleSetDefaultCity}
-                disabled={!cityInput.trim()}
+                style={[styles.unitPill, units === 'metric' && styles.unitPillActive]}
+                onPress={() => handleSetUnit('metric')}
+                activeOpacity={0.7}
               >
-                <Text style={styles.saveBtnText}>Save</Text>
+                <Text style={[styles.unitPillText, units === 'metric' && styles.unitPillTextActive]}>
+                  Celsius
+                </Text>
+                <Text style={[styles.unitPillSymbol, units === 'metric' && styles.unitPillTextActive]}>
+                  {'\u00B0C'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.unitPill, units === 'imperial' && styles.unitPillActive]}
+                onPress={() => handleSetUnit('imperial')}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.unitPillText, units === 'imperial' && styles.unitPillTextActive]}>
+                  Fahrenheit
+                </Text>
+                <Text style={[styles.unitPillSymbol, units === 'imperial' && styles.unitPillTextActive]}>
+                  {'\u00B0F'}
+                </Text>
               </TouchableOpacity>
             </View>
-          </SectionCard>
+          </View>
 
-          <SectionCard title="Notifications" iconName="notifications-outline">
-            <SettingsRow
-              label="Daily forecast"
-              subtitle="Morning weather updates"
-              rightContent={
-                <Switch
+          {/* Default City */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Default City</Text>
+            <View style={styles.cityCard}>
+              <View style={styles.cityCurrentRow}>
+                <Feather name="map-pin" size={16} color="rgba(255,255,255,0.4)" />
+                <Text style={styles.cityCurrentText}>{defaultCity}</Text>
+              </View>
+              <View style={styles.cityInputRow}>
+                <TextInput
+                  style={styles.cityInput}
+                  placeholder="Change default city..."
+                  placeholderTextColor="rgba(255,255,255,0.2)"
+                  value={cityInput}
+                  onChangeText={setCityInput}
+                  onSubmitEditing={handleSetDefaultCity}
+                  returnKeyType="done"
+                />
+                <TouchableOpacity
+                  style={[styles.saveBtn, !cityInput.trim() && styles.saveBtnDisabled]}
+                  onPress={handleSetDefaultCity}
+                  disabled={!cityInput.trim()}
+                  activeOpacity={0.7}
+                >
+                  <Feather name="check" size={18} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          {/* Notifications */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Notifications</Text>
+            <View style={styles.notifCard}>
+              <View style={styles.notifRow}>
+                <View style={styles.notifIconWrap}>
+                  <Feather name="sun" size={16} color="#fbbf24" />
+                </View>
+                <View style={styles.notifTextWrap}>
+                  <Text style={styles.notifLabel}>Daily forecast</Text>
+                  <Text style={styles.notifHint}>Morning weather summary</Text>
+                </View>
+                <ToggleSwitch
                   value={dailyForecast}
-                  onValueChange={(val) => {
+                  onToggle={() => {
+                    const val = !dailyForecast;
                     setDailyForecast(val);
                     setNotificationSetting('dailyForecast', val);
                   }}
-                  trackColor={{ false: 'rgba(255,255,255,0.1)', true: 'rgba(59,130,246,0.4)' }}
-                  thumbColor={dailyForecast ? '#3b82f6' : '#64748b'}
+                  activeColor="#3b82f6"
                 />
-              }
-            />
-            <View style={styles.rowDivider} />
-            <SettingsRow
-              label="Severe weather"
-              subtitle="Storm and extreme alerts"
-              rightContent={
-                <Switch
+              </View>
+              <View style={styles.notifDivider} />
+              <View style={styles.notifRow}>
+                <View style={[styles.notifIconWrap, { backgroundColor: 'rgba(239,68,68,0.12)' }]}>
+                  <Feather name="alert-triangle" size={16} color="#f87171" />
+                </View>
+                <View style={styles.notifTextWrap}>
+                  <Text style={styles.notifLabel}>Severe weather</Text>
+                  <Text style={styles.notifHint}>Storm and extreme alerts</Text>
+                </View>
+                <ToggleSwitch
                   value={severeAlerts}
-                  onValueChange={(val) => {
+                  onToggle={() => {
+                    const val = !severeAlerts;
                     setSevereAlerts(val);
                     setNotificationSetting('severeAlerts', val);
                   }}
-                  trackColor={{ false: 'rgba(255,255,255,0.1)', true: 'rgba(239,68,68,0.4)' }}
-                  thumbColor={severeAlerts ? '#ef4444' : '#64748b'}
+                  activeColor="#ef4444"
                 />
-              }
-            />
-          </SectionCard>
+              </View>
+            </View>
+          </View>
 
-          <SectionCard title="About" iconName="information-circle-outline">
-            <SettingsRow
-              label="Version"
-              rightContent={<Text style={styles.versionText}>1.0.0</Text>}
-            />
-            <View style={styles.rowDivider} />
-            <SettingsRow label="Data source" subtitle="OpenWeatherMap" />
-          </SectionCard>
+          {/* About */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>About</Text>
+            <View style={styles.aboutCard}>
+              <View style={styles.aboutTop}>
+                <View style={styles.appIconWrap}>
+                  <Feather name="cloud" size={24} color="#60a5fa" />
+                </View>
+                <View>
+                  <Text style={styles.appName}>Weather App</Text>
+                  <Text style={styles.appVersion}>Version 1.0.0</Text>
+                </View>
+              </View>
+              <View style={styles.aboutDivider} />
+              <View style={styles.aboutRow}>
+                <Text style={styles.aboutLabel}>Data source</Text>
+                <Text style={styles.aboutValue}>OpenWeatherMap</Text>
+              </View>
+              <View style={styles.aboutRow}>
+                <Text style={styles.aboutLabel}>Framework</Text>
+                <Text style={styles.aboutValue}>React Native</Text>
+              </View>
+            </View>
+          </View>
 
           <View style={{ height: 90 }} />
         </ScrollView>
@@ -197,108 +249,203 @@ const styles = StyleSheet.create({
   },
   scroll: { flex: 1 },
   scrollContent: {
-    paddingTop: 16,
+    paddingTop: 8,
   },
-  sectionCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16,
+
+  // Sections
+  section: {
     marginHorizontal: 20,
-    marginBottom: 12,
-    padding: 16,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.08)',
+    marginBottom: 24,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14,
-    gap: 8,
-  },
-  sectionTitle: {
-    fontSize: 13,
+  sectionLabel: {
+    fontSize: 12,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.5)',
+    color: 'rgba(255,255,255,0.35)',
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 1,
+    marginBottom: 10,
+    marginLeft: 2,
   },
-  settingsRow: {
+
+  // Unit pills
+  unitPillRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  unitPill: {
+    flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
   },
-  settingsRowLeft: {
-    flex: 1,
-    marginRight: 12,
+  unitPillActive: {
+    backgroundColor: 'rgba(59,130,246,0.15)',
+    borderColor: 'rgba(59,130,246,0.35)',
   },
-  settingsLabel: {
-    fontSize: 15,
+  unitPillText: {
+    fontSize: 14,
     fontWeight: '500',
+    color: 'rgba(255,255,255,0.4)',
+  },
+  unitPillSymbol: {
+    fontSize: 20,
+    fontWeight: '300',
+    color: 'rgba(255,255,255,0.25)',
+  },
+  unitPillTextActive: {
     color: '#FFFFFF',
   },
-  settingsSubtitle: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.4)',
-    marginTop: 1,
+
+  // City
+  cityCard: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 14,
+    padding: 14,
   },
-  rowDivider: {
-    height: 0.5,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    marginVertical: 8,
+  cityCurrentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
   },
-  unitBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    backgroundColor: 'rgba(59,130,246,0.2)',
-    borderRadius: 8,
-    borderWidth: 0.5,
-    borderColor: 'rgba(59,130,246,0.3)',
-  },
-  unitBtnActive: {
-    backgroundColor: 'rgba(245,158,11,0.2)',
-    borderColor: 'rgba(245,158,11,0.3)',
-  },
-  unitBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
+  cityCurrentText: {
+    fontSize: 17,
+    fontWeight: '600',
     color: '#FFFFFF',
   },
   cityInputRow: {
     flexDirection: 'row',
-    marginTop: 10,
     gap: 8,
   },
   cityInput: {
     flex: 1,
     height: 40,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(0,0,0,0.2)',
     borderRadius: 10,
     paddingHorizontal: 12,
     fontSize: 14,
     color: '#FFFFFF',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.1)',
     outlineStyle: 'none',
   },
   saveBtn: {
+    width: 40,
     height: 40,
-    paddingHorizontal: 18,
-    backgroundColor: 'rgba(59,130,246,0.3)',
+    backgroundColor: 'rgba(59,130,246,0.4)',
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
   saveBtnDisabled: {
-    opacity: 0.3,
+    opacity: 0.25,
   },
-  saveBtnText: {
-    fontSize: 14,
+
+  // Notifications
+  notifCard: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 14,
+    padding: 4,
+  },
+  notifRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    gap: 12,
+  },
+  notifIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: 'rgba(251,191,36,0.12)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notifTextWrap: {
+    flex: 1,
+  },
+  notifLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#FFFFFF',
+  },
+  notifHint: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.3)',
+    marginTop: 1,
+  },
+  notifDivider: {
+    height: 0.5,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    marginHorizontal: 12,
+  },
+
+  // Toggle
+  toggleTrack: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    padding: 2,
+    justifyContent: 'center',
+  },
+  toggleThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+  },
+
+  // About
+  aboutCard: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 14,
+    padding: 16,
+  },
+  aboutTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  appIconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 13,
+    backgroundColor: 'rgba(96,165,250,0.12)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  appName: {
+    fontSize: 17,
     fontWeight: '600',
     color: '#FFFFFF',
   },
-  versionText: {
+  appVersion: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.35)',
+    marginTop: 2,
+  },
+  aboutDivider: {
+    height: 0.5,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    marginVertical: 14,
+  },
+  aboutRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 5,
+  },
+  aboutLabel: {
     fontSize: 13,
     color: 'rgba(255,255,255,0.4)',
+  },
+  aboutValue: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.65)',
     fontWeight: '500',
   },
 });

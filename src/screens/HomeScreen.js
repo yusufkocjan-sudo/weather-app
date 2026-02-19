@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { COLORS, SIZES, getGradient } from '../constants/theme';
-import { getCityImage } from '../constants/cityImages';
+import { fetchCityImage } from '../constants/cityImages';
 import { getCurrentWeather, getForecast } from '../services/weatherApi';
 import { getRecentCities, addRecentCity, getUnits, setUnits as saveUnits, getDefaultCity } from '../utils/storage';
 
@@ -64,7 +64,8 @@ export default function HomeScreen() {
       setWeather(weatherData);
       setForecast(forecastData);
       setGradient(getGradient(weatherData.weather[0].main));
-      setCityImage(getCityImage(city));
+      const img = await fetchCityImage(city);
+      setCityImage(img);
       const updated = await addRecentCity(city);
       setRecentCities(updated);
     } catch (err) {

@@ -10,7 +10,7 @@ import { COLORS, SIZES } from '../constants/theme';
 import { getForecast } from '../services/weatherApi';
 import { getUnits } from '../utils/storage';
 import { convertTemp } from '../utils/helpers';
-import { getCityImage } from '../constants/cityImages';
+import { fetchCityImage } from '../constants/cityImages';
 
 import SearchBar from '../components/SearchBar';
 import DailyForecast from '../components/DailyForecast';
@@ -42,7 +42,8 @@ export default function ForecastScreen() {
     try {
       const data = await getForecast(c, 'metric');
       setForecast(data);
-      setCityImage(getCityImage(c));
+      const img = await fetchCityImage(c);
+      setCityImage(img);
     } catch {
       setForecast(null);
     } finally {

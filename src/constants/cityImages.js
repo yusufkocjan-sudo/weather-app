@@ -66,10 +66,44 @@ const CITY_IMAGES = {
   },
 };
 
+// In-memory cache for dynamically fetched images
+const imageCache = {};
+
 export function getCityImage(cityName) {
   if (!cityName) return null;
   const key = cityName.toLowerCase().trim();
-  return CITY_IMAGES[key]?.image || null;
+  // Check hardcoded first, then cache
+  return CITY_IMAGES[key]?.image || imageCache[key] || null;
+}
+
+export async function fetchCityImage(cityName) {
+  if (!cityName) return null;
+  const key = cityName.toLowerCase().trim();
+
+  // Return hardcoded image if available
+  if (CITY_IMAGES[key]?.image) return CITY_IMAGES[key].image;
+
+  // Return cached image if already fetched
+  if (imageCache[key]) return imageCache[key];
+
+  // Fetch from Wikipedia REST API
+  try {
+    const res = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cityName)}`
+    );
+    if (res.ok) {
+      const data = await res.json();
+      const imageUrl = data.originalimage?.source || data.thumbnail?.source || null;
+      if (imageUrl) {
+        imageCache[key] = imageUrl;
+        return imageUrl;
+      }
+    }
+  } catch {
+    // Wikipedia failed, ignore
+  }
+
+  return null;
 }
 
 export const CITY_LIST = Object.values(CITY_IMAGES);
